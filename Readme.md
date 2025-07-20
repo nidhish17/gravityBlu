@@ -33,6 +33,8 @@ video's res is available ie due to init/variable being read during init phase an
   - SABR forcing error
   - formats skipped due to SABR
 
+- [ ] updater.exe opens with console (was used to debug) use --windowed flag and remove the console
+
 
 ## Missing Features
 - currently you cannot download age restricted videos
