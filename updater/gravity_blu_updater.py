@@ -54,20 +54,7 @@ class AppUpdater:
 
             exe_path = self.download_exe(latest_version, progress_cb)
 
-            while True:
-                try:
-                    os.kill(args.parent_pid, 0)
-                    time.sleep(0.5)
-                except OSError as e:
-                    if e.errno == errno.ESRCH:  # No such process — it's dead
-                        break
-                    elif e.errno == errno.EPERM:  # Not allowed to signal — assume alive
-                        time.sleep(0.5)
-                    else:
-                        if e.errno in (errno.ESRCH, errno.EPERM) or e.winerror == 11:
-                            # print("Unexpected OSError:", e)
-                            break
-
+            # Relying on pywebview seeming that the app/window is closed/destroyed before replacing
             self.replace_app(exe_path)
 
         except Exception as e:
