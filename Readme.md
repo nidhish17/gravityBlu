@@ -19,7 +19,11 @@
     - pip install -r requirements.txt
   - Run setup.py (if your frontend server is different then replace the url argument in webview.create_window with your frontend server url)
 - Upgrading packages
-  - pip install yt-dlp -U
+  - if downloader does not work for some reason make sure the yt-dlp package is up-to-date
+    - you can check by using the cmd &rarr; pip show yt-dlp
+    - crosscheck in pypi website &rarr; https://pypi.org/project/yt-dlp/ 
+    - if update is available then upgrade it by using t5his cmd
+      - pip install yt-dlp -U
 - To freeze app using pyinstaller
   - To be updated 
 
