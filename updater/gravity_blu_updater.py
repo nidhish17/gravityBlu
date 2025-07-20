@@ -6,6 +6,8 @@ import requests
 import tempfile
 import shutil
 from updater.updater_ui import UpdaterUi
+import time
+import errno
 
 # APP_NAME = "GravityBlu.exe"
 test_app_name = "ambientTube.msi"
@@ -55,15 +57,24 @@ class AppUpdater:
             while True:
                 try:
                     os.kill(args.parent_pid, 0)
-                except OSError:
-                    break
+                    time.sleep(0.5)
+                except OSError as e:
+                    if e.errno == errno.ESRCH:  # No such process — it's dead
+                        break
+                    elif e.errno == errno.EPERM:  # Not allowed to signal — assume alive
+                        time.sleep(0.5)
+                    else:
+                        if e.errno in (errno.ESRCH, errno.EPERM) or e.winerror == 11:
+                            # print("Unexpected OSError:", e)
+                            break
 
             self.replace_app(exe_path)
 
         except Exception as e:
             print("Update Failed\n", e)
         finally:
-            print("Done updaing")
+            print("Done updating")
+            # launch your updated application!
 
 
     def download_exe(self, latest_tag, progress_cb):
