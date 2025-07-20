@@ -5,6 +5,7 @@
 
 ## How To Run
 ### development mode
+- git clone https://github.com/nidhish17/gravityBlu.git
 - first install frontend packages
   - cd frontend
   - npm i 
