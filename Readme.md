@@ -1,4 +1,4 @@
-# GravityRage
+# GravityBlu
 1. A YouTube downloader GUI built with pywebview and yt-dlp
 
 ![demo image](./assets/demo1.png)
