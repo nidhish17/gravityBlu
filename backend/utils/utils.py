@@ -7,6 +7,7 @@ APP_HEIGHT=770
 MIN_APP_WIDTH=1280
 MIN_APP_HEIGHT=770
 
+# this var is same on the updater.exe too which it relies on to replace the app after updating. ref -> APP_NAME (in gravity_blu_updater.py)
 FINAL_APP_NAME_ON_DISK = "GravityBlu.exe"
 
 __VERSION__ = "2.0.0"

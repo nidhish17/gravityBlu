@@ -72,3 +72,10 @@ video's res is available ie due to init/variable being read during init phase an
 - [x] implement updating feature to app
 - [ ]
 
+## Guidelines for releases for updater to work
+1. tag name should be in the format 2.0.0 -> x.x.x
+2. first release of the app version is 2.0.0
+3. for later releases depending on the complexity of update name 2.x.x
+4. for small features and bug fixes increment 2.0.x
+5. for major updates increment 2.x.0 or x.0.0
+
