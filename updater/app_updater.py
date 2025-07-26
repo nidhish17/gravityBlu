@@ -9,7 +9,7 @@ import subprocess
 
 class AppUpdate:
     def __init__(self):
-        self.repo = "nidhish17/ambientTube"
+        self.repo = "nidhish17/gravityBlu"
         self.url = f"https://api.github.com/repos/{self.repo}/releases/latest"
 
     def check_for_updates(self):
@@ -24,11 +24,11 @@ class AppUpdate:
                 update_available = True
             return {"details": {"currentVersion": __VERSION__, "latestVersion": latest_version, "updateAvailable": update_available}}
         except Exception as e:
-            print(e)
-            return {"status": Status.ERROR, "details": {"error": str(e)}, "ok": False}
+            # print(e, "from app_updater")
+            return {"status": Status.ERROR.value, "details": {"error": str(e)}, "ok": False}
 
     def update_application(self):
-        print("Updating application, updating started!")
+        # print("Updating application, updating started!")
         if (getattr(sys, "frozen", False)):
             base_dir = os.path.dirname(sys.executable)
         else:
@@ -36,14 +36,14 @@ class AppUpdate:
         # print(str(os.getpid()))
         cmd = [
             os.path.join(base_dir, "updater.exe"),
-            "--current-version", "1.0.0",
+            "--current-version", __VERSION__,
             "--parent-pid", str(os.getpid())
         ]
         subprocess.Popen(
             cmd,
             creationflags=subprocess.DETACHED_PROCESS
         )
-        print("Closing application")
+        # print("Closing application")
         windows[0].destroy()
 
 # update = AppUpdate()

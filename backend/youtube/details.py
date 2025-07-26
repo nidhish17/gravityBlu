@@ -1,5 +1,4 @@
 from yt_dlp import YoutubeDL
-from tinydb import TinyDB
 from backend.user.database import User
 
 # db = TinyDB("video_info.json")

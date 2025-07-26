@@ -5,8 +5,7 @@ from functools import partial
 from backend.user.database import get_user, add_download
 from yt_dlp import YoutubeDL
 
-from backend.utils.utils import generate_filename
-from backend.youtube.utils import FFMPEG_PATH
+from backend.utils.utils import generate_filename, FFMPEG_PATH
 
 
 class AudioDownloader:

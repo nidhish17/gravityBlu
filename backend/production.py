@@ -1,6 +1,9 @@
 ### -------------------------------------use google dns------------------------------------- ###
 import os.path
 import socket, dns.resolver              # pip install dnspython
+
+
+
 # one resolver, hard-wired to Google DNS
 _res = dns.resolver.Resolver(configure=False)
 _res.nameservers = ['8.8.8.8']           # 1.1.1.1 also fine
@@ -19,9 +22,8 @@ socket.getaddrinfo = fast_dns            # ←  installs the patch
 ### ----------------------------------------------------------------------------------------- ###
 
 import webview
-from utils.utils import APP_NAME
-from backend.utils.utils import APP_WIDTH, APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT
-from main import DownloaderApi
+from backend.utils.utils import APP_WIDTH, APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT, APP_NAME
+from backend.main import DownloaderApi
 
 # ------------------------------------ prevent user from opening multiple instances of my app ------------------------------------ #
 import win32event
