@@ -51,14 +51,14 @@ class AudioDownloader:
 
     def progress_hook(self, update_progress: Callable, download_complete: Callable, d):
         video_id = d.get("info_dict").get("id")
-        print(video_id)
+        # print(video_id)
         if d.get("status") == "downloading":
             percent = d.get("_percent_str", "").strip()
             speed = d.get("_speed_str", "")
             eta = d.get("_eta_str", "")
             done = d.get("downloaded_bytes", 0)
             total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
-            data = {"id": f"{video_id}audio", "progressPercent": percent, "eta": eta, "speed": speed, "downloaded": False,
+            data = {"id": f"{video_id}audio", "progressPercent": str(percent), "eta": str(eta), "speed": str(speed), "downloaded": False,
                     "processing": False, "downloadedBytes": done, "totalBytes": total}
             update_progress(data)
         elif d.get("status") == "finished":
@@ -79,7 +79,11 @@ class AudioDownloader:
                 "preferredcodec": "mp3",
                 "preferredquality": "0"
             }],
-            "merge_output_format": "mp3"
+            "merge_output_format": "mp3",
+            "no_color": True,
+            "noprogress": True,
+            "quiet": True,
+            "no_warnings": True
         }
 
         return ydl_opts

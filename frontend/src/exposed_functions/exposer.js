@@ -4,7 +4,6 @@ const downloadStore = useDownloadStore.getState();
 
 window.addEventListener("pywebviewready", () => {
     window.updateProgressFromPy = function (data) {
-        // const data = {progress, eta, speed, downloaded};
         // console.log(data);
         const {progressPercent: progress, id, ...rest} = data;
         // console.log(rest);

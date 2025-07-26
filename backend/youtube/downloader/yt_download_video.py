@@ -42,7 +42,7 @@ class VideoDownloader:
                 eta = d.get("_eta_str", "")
                 done = d.get("downloaded_bytes", 0)
                 total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
-                data = {"id": video_id, "progressPercent": percent, "eta": eta, "speed": speed, "downloaded": False,
+                data = {"id": video_id, "progressPercent": f"{percent}", "eta": f"{eta}", "speed": f"{speed}", "downloaded": False,
                         "processing": False, "downloadedBytes": done, "totalBytes": total}
                 update_progress(data)
             elif d["status"] == "finished":
@@ -61,7 +61,7 @@ class VideoDownloader:
             filesize = downloaded_info.get("filesize") or downloaded_info.get("filesize_approx")
             try:
                 actual_filesize = os.path.getsize(save_loc + ".mp4")
-                print(actual_filesize, "actual filesize")
+                # print(actual_filesize, "actual filesize")
             except Exception as e:
                 print(f"An exception {e} occurred")
             title = downloaded_info.get("title")
@@ -78,7 +78,6 @@ class VideoDownloader:
                 resolution=resolution,
                 d_type="video"
             )
-            print("downloaded", downloaded_info, "downloaded")
             data = {"id": video_id, "downloaded": True, "processing": False}
             # send the data to the frontend indicating that video download has been completed
             if download_complete:
@@ -110,7 +109,10 @@ class VideoDownloader:
             "updatetime": False,
             "merge_output_format": "mp4",
             # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
-            # "noprogress": True,
+            "noprogress": True,
+            "quiet": True,
+            "no_warnings": True,
+            "no_color": True
         }
 
         return ydl_opts
