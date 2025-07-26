@@ -25,8 +25,8 @@
     - if update is available then upgrade it by using t5his cmd
       - pip install yt-dlp -U
 - To freeze app using pyinstaller
-  - <pre>
-      ```python pyinstaller backend/production.py --name="GravityBlu" --onefile --icon="assets/icon.png" --add-data "./backend/frontend_production;frontend_production" --noconsole```
+  - <pre lang="python">
+      pyinstaller backend/production.py --name="GravityBlu" --onefile --icon="assets/icon.png" --add-data "./backend/frontend_production;frontend_production" --noconsole
     </pre>
 
 ## Known Issues
