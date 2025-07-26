@@ -48,7 +48,11 @@ if last_error == 183:
 def app():
     api = DownloaderApi()
     base_dir = os.path.abspath("frontend_production")
-    frontend_index_file_path = os.path.join(base_dir, "index.html")
+    if getattr(sys, "frozen", False):
+        frontend_index_file_path = os.path.join(sys._MEIPASS, "frontend_production/index.html")
+    else:
+        frontend_index_file_path = os.path.join(base_dir, "index.html")
+
     print(frontend_index_file_path)
     app_window = webview.create_window(
         title=APP_NAME,

@@ -1,8 +1,16 @@
 from peewee import CharField, SqliteDatabase, Model, BooleanField, IntegerField, ForeignKeyField, BigIntegerField
 import os
 from threading import Lock
+import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+
 # print(BASE_DIR)
 DB_PATH = os.path.join(BASE_DIR, "user.db")
 db = SqliteDatabase(DB_PATH)
