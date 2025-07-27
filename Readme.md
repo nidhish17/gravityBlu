@@ -14,8 +14,9 @@
     </div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <h3>Parallel Downloads</h3>
-        <img src="assets/app_scs/Screenshot%202025-07-26%2020-24-32.png" alt="app img" style="border-radius: 5px;" />
+        <img src="assets/demo5.png" alt="app img" style="border-radius: 5px;" />
     </div>
+    <img src="assets/app_scs/Screenshot%202025-07-26%2020-24-32.png" alt="app img" style="border-radius: 5px;" />
     <img src="assets/app_scs/Screenshot%202025-07-26%2020-23-53.png" alt="app img" style="border-radius: 5px;" />
 </div>
 
