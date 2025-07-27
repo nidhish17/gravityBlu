@@ -6,14 +6,13 @@ import requests
 import tempfile
 import shutil
 from updater.updater_ui import UpdaterUi
-import time
-import errno
 
-# APP_NAME = "GravityBlu.exe"
-test_app_name = "ambientTube.msi"
-APP_NAME = test_app_name
 
-GITHUB_REPO = "nidhish17/ambientTube"
+APP_NAME = "GravityBlu.exe"
+# test_app_name = "ambientTube.msi"
+# APP_NAME = test_app_name
+
+GITHUB_REPO = "nidhish17/gravityBlu"
 GITHUB_LATEST_RELEASE_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
 
