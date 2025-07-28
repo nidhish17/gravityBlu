@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Intel+One+Mono:ital,wght@0,300..700;1,300..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+    --font-intelmono: "Intel One Mono", monospace;
+    --bg-size-200: background-size
+}
+
+@layer base {
+    body {
+        @apply bg-black text-neutral-100 font-intelmono;
+    }
+    html {
+        @apply scroll-smooth;
+    }
+
+    img {
+        display: block;
+        max-inline-size: 100%;
+    }
+
+    .animate-pulse-slow {
+        animation: pulse 10s cubic-bezier(1, 1, 1, 1) infinite;
+    }
+
+}
+
+
