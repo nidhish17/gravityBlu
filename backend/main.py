@@ -1,6 +1,6 @@
 from updater.app_updater import AppUpdate
 from backend.status import Status
-from backend.user.database import init_db
+from backend.user.database import init_db, delete_download
 from backend.user.defaultSettings import DefaultSettings
 from backend.user.save_loc import SaveLocation
 from backend.youtube.download_catalog import DownloadCatalog
@@ -42,11 +42,30 @@ class DownloaderApi:
             }
             # return {"message": f"An error occurred: {e}", "status_code": 500}
 
+    def delete_download(self, download_id: int):
+        try:
+            print("Deleting: ", download_id)
+            data = delete_download(download_id)
+            print(data)
+            return {
+                "ok": True,
+                "status": Status.SUCCESS.value,
+                "data": data
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "status": Status.ERROR.value,
+                "data": str(e)
+            }
+
+
+
     def about(self):
         return {
             "developer": "Nico An",
             "license": "GNU",
             "app_name": "gravityBlu",
-            "version": "2.0.0"
+            "version": "2.0.1"
         }
 

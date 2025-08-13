@@ -17,7 +17,9 @@ const VideoCard = function ({
                                 processing,
                                 downloadType,
                                 progressDetail,
-                                downloadedDetail = {}
+                                downloadedDetail = {},
+                                downloadId,
+                                handleDeleteDownload
                             }) {
 
     const [loading, setLoading] = useState(false);
@@ -35,6 +37,8 @@ const VideoCard = function ({
             setLoading(false);
         }
     }
+
+
 
     return (
         <div
@@ -68,6 +72,8 @@ const VideoCard = function ({
                         </h4>
                         {downloaded && (
                             <button
+                                onClick={() => handleDeleteDownload(downloadId)}
+                                disabled={loading}
                                 className="cursor-pointer self-start opacity-0 group-hover:opacity-100 hover:bg-red-500/20 p-1 rounded">
                                 <RiDeleteBin2Line className="text-red-600" size={20}/>
                             </button>

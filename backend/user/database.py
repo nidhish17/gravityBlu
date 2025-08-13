@@ -79,8 +79,15 @@ def get_downloads(user_id = 1, page: int = 1):
 
     return list(query)
 
+def delete_download(download_id: int, user_id: int = 1):
+    query = (
+        Download
+        .delete()
+        .where((Download.id == download_id) & (Download.user_id == user_id))
+    )
 
-
+    rows_deleted = query.execute()
+    return rows_deleted
 
 # db.connect()
 # db.create_tables([User])

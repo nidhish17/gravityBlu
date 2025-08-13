@@ -40,6 +40,25 @@ const Downloaded = function ({videosDownloading}) {
         fetchDownloaded();
     }, [videosDownloading]);
 
+    const handleDeleteDownload = async function (id) {
+        console.log(id);
+        try {
+            setLoading(true);
+            const data = await window.pywebview.api.delete_download(id);
+            setDownloadedContent((downloads) => {
+                return downloads.filter((download) => (download.downloadId !== id));
+            });
+            const updatedMetadata = await window.pywebview.api.catalog.get_downloads_metadata();
+            setDownloadsMetadata(updatedMetadata);
+            console.log(data);
+            toast.success(`successfully deleted. Deleting a card doesn't delete the video`, {duration: 4000})
+        } catch (err) {
+            toast.error("couldn't delete the download.");
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <div className={`flex flex-col justify-between grow`}>
             <div className="flex flex-col gap-y-4 grow">
@@ -47,12 +66,12 @@ const Downloaded = function ({videosDownloading}) {
                 <div className="relative grow">
                     <div className="absolute h-full w-full overflow-y-scroll flex flex-col gap-y-4 pb-4 no-scrollbar">
                         {loading ?
-                            <p className="text-2xl font-semibold text-center animate-pulse">Loading...</p>
+                            <p className="text-3xl font-semibold text-center animate-pulse">Loading...</p>
                             :
                             downloadedContent.map((dl, i) => {
-                                const {title, duration, thumbnail, resolution, type, filesize, saveLocation} = dl;
-                                return <VideoCard key={i} downloaded thumbImgLink={thumbnail} downloadType={type} videoTitle={title}
-                                                  downloadedDetail={{duration, resolution, filesize, saveLocation}} />
+                                const {title, duration, thumbnail, resolution, type, filesize, saveLocation, downloadId} = dl;
+                                return <VideoCard key={downloadId} downloaded thumbImgLink={thumbnail} downloadType={type} videoTitle={title}
+                                                  downloadedDetail={{duration, resolution, filesize, saveLocation}} downloadId={downloadId} handleDeleteDownload={handleDeleteDownload} />
                             })}
                     </div>
                 </div>
