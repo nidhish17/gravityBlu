@@ -107,7 +107,8 @@ if __name__ == "__main__":
 
 
 # updater = AppUpdater()
-# lv = updater.get_latest_version
+# lv = updater.get_latest_version()
+# print(lv)
 # print(os.path.join(tempfile.gettempdir(), "GravityBlu.exe"))
 
 

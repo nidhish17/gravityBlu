@@ -1,5 +1,4 @@
 import customtkinter as ctk
-from PIL import Image
 import os, sys
 
 WIDTH = 600
@@ -37,9 +36,9 @@ class UpdaterUi(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
 
         # 1) Logo spans both columns, so it's dead-center in row 0
-        updater_img = ctk.CTkImage(Image.open(resource_path("icon.png")), size=(250, 250))
-        image_label = ctk.CTkLabel(self, image=updater_img, text="")
-        image_label.grid(row=0, column=0, columnspan=2)
+        # updater_img = ctk.CTkImage(Image.open(resource_path("icon.png")), size=(250, 250))
+        # image_label = ctk.CTkLabel(self, image=updater_img, text="")
+        # image_label.grid(row=0, column=0, columnspan=2)
 
         # 2) Progress bar + percent in row 1
         self.progress_var = ctk.DoubleVar(value=0.0)
