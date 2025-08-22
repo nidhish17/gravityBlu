@@ -8,6 +8,7 @@ class DownloadCatalog:
         print("called get_downloaded")
         for dl in downloaded_content:
             downloads.append({
+                "downloadId": dl.id,
                 "title": dl.title,
                 "type": dl.type,
                 "duration": dl.duration,

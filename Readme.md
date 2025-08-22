@@ -27,3 +27,4 @@
 
 
 
+# while uploading the exe to github for update the tag name should be a new one and it shoould match the new version so the fix works

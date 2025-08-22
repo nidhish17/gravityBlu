@@ -1,11 +1,9 @@
-import os
-import sys
 import requests
-from webview import windows
 from backend.status import Status
 from backend.utils.utils import __VERSION__
 from packaging import version
-import subprocess
+import webbrowser
+
 
 class AppUpdate:
     def __init__(self):
@@ -22,33 +20,35 @@ class AppUpdate:
             update_available = False
             if version.parse(latest_version) > version.parse(current_version):
                 update_available = True
-            return {"details": {"currentVersion": __VERSION__, "latestVersion": latest_version, "updateAvailable": update_available}}
+            return {"details": {"currentVersion": __VERSION__, "latestVersion": latest_version,
+                                "updateAvailable": update_available}}
         except Exception as e:
             # print(e, "from app_updater")
             return {"status": Status.ERROR.value, "details": {"error": str(e)}, "ok": False}
 
-    def update_application(self):
-        # print("Updating application, updating started!")
-        if (getattr(sys, "frozen", False)):
-            base_dir = os.path.dirname(sys.executable)
-        else:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-        # print(str(os.getpid()))
-        cmd = [
-            os.path.join(base_dir, "updater.exe"),
-            "--current-version", __VERSION__,
-            "--parent-pid", str(os.getpid())
-        ]
-        subprocess.Popen(
-            cmd,
-            creationflags=subprocess.DETACHED_PROCESS
-        )
-        # print("Closing application")
-        windows[0].destroy()
+    def open_update_website(self):
+        try:
+            webbrowser.open("https://gravityblu.netlify.app/download")
+            return {
+                "status": Status.SUCCESS.value,
+                "details": {
+                    "message": "opened update website successfully",
+                },
+                "ok": True
+            }
+        except Exception as err:
+            return {
+                "status": Status.ERROR.value,
+                "details": {
+                    "message": "something went wrong",
+                    "error": str(err),
+                    "ok": False
+                }
+            }
 
 # update = AppUpdate()
 # update.check_for_updates()
-# update.update_application()
+
 
 ### Update Naming Conventions ###
 # They should NOT START WITH LETTER V like this -> v1.2.0; correct format -> 1.2.0
@@ -58,5 +58,3 @@ class AppUpdate:
 # The first app would be with an installer rest all releases would be just exe that should only be used by updater.exe
 # [! IMPORTANT]
 #### Make sure to update the __version__ variable in utils.utils.py else the update feature will not work! ####
-
-
