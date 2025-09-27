@@ -14,7 +14,7 @@ const Download = function ({loading, setLoading}) {
 
     const addDownload = async function (e) {
         e.preventDefault();
-        console.log(downloadUrl);
+        // console.log(downloadUrl);
         if (!downloadUrl || (!downloadUrl.includes("youtube.com/watch") && !downloadUrl.includes("youtu.be/") && !downloadUrl.includes("youtube.com"))) {
             toast("please enter a valid youtube url", {
                 duration: 3000,
@@ -39,7 +39,7 @@ const Download = function ({loading, setLoading}) {
                 return;
             }
             const {videoInformation} = videoInfo.data;
-            console.log(videoInformation);
+            // console.log(videoInformation);
             const {videoTitle, videoId, videoDuration, selectedFormat, thumbnail: videoThumb} = videoInformation;
             const newDownload = {
                 downloaded: false,
@@ -56,7 +56,7 @@ const Download = function ({loading, setLoading}) {
             setDownloads(newDownload);
             setDownloadUrl("");
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             toast.error("something went wrong.");
         } finally {
             setLoading(false)

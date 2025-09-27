@@ -16,6 +16,10 @@ const useDownloadStore = create((setState, getState) => ({
         }
     }),
     getTotalDownloading: () => getState().downloads.length,
+
+    removeDownload: (id) => setState((state) => ({
+        downloads: state.downloads.filter((d) => d.id !== id)
+    }))
 }));
 
 

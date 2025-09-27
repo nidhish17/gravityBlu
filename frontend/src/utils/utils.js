@@ -10,4 +10,10 @@ function formatBytes(bytes, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export {formatBytes};
+const truncate = (s, n, omission = '…') => {
+  const arr = Array.from((s ?? '').toString()); // handles surrogate pairs
+  return arr.length > n ? arr.slice(0, n).join('') + omission : arr.join('');
+};
+
+
+export {formatBytes, truncate};

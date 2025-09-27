@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # App version
-__VERSION__ = "2.0.2"
+__VERSION__ = "2.0.3"
 
 APP_WIDTH=1280
 APP_HEIGHT=770

@@ -1,4 +1,7 @@
 import useDownloadStore from "../hooks/useDownloadStore.js";
+import toast from "react-hot-toast";
+import {truncate} from "../utils/utils.js";
+import download from "../components/pages/Download.jsx";
 
 const downloadStore = useDownloadStore.getState();
 
@@ -21,6 +24,17 @@ window.addEventListener("pywebviewready", () => {
         return "";
     }
 
-})
+    window.downloadError = function (data) {
+        const {ok, status, details, metadata} = data;
+        const {title="", id, url} = metadata;
+        console.log(data);
+        const {removeDownload, downloads} = useDownloadStore.getState();
+        console.log(downloads);
+        removeDownload(id);
+        toast.error(`Failed to download ${truncate(title, 10)} ${details}` || "failed to download", {duration: 6000});
+        return "";
+    }
+
+});
 
 
