@@ -40,9 +40,6 @@ video's res is available ie due to init/variable being read during init phase an
   - SABR forcing error
   - formats skipped due to SABR
 
-- [ ] updater.exe opens with console (was used to debug) use --windowed flag and remove the console
-
-
 ## Missing Features
 - currently you cannot download age restricted videos
   - cookies auth has not been implemented yet
@@ -70,7 +67,7 @@ video's res is available ie due to init/variable being read during init phase an
 
 
 ## Dev Notes
-### ⚠️ 👽👽👽🧨🧨🧨🧨🧨🧨🧨🐦‍🔥 ALWAYS REMEMBER TO UPDATE THE "__ VERSION __" VARIABLE ELSE UPDATING FEATURE WILL NOT WORK ⚠️
+### ⚠️ 👽👽👽🧨🧨🧨🧨🧨🧨🧨🐦‍🔥 ALWAYS REMEMBER TO UPDATE THE "__ VERSION __" VARIABLE ELSE UPDATING notification WILL NOT be triggered in app ⚠️
 - [x] implement updating feature to app
 - [ ]
 
@@ -81,4 +78,4 @@ video's res is available ie due to init/variable being read during init phase an
 4. for small features and bug fixes increment 2.0.x
 5. for major updates increment 2.x.0 or x.0.0
 
-# while uploading the exe to github for update the tag name should be a new one and it shoould match the new version so the fix works
+# while uploading the exe to github for update the tag name should be a new one and it shoould match the new version so the user gets new update available message
