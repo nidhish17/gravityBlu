@@ -127,7 +127,7 @@ class VideoDownloader:
             except DownloadError as e:
                 error_msg = str(e).lower()
                 if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
-                    print("Age restricted video")
+                    # print("Age restricted video")
                     raise Exception("Age-Restricted video cannot be downloaded!")
 
     def post_processor(self, d):
@@ -146,13 +146,13 @@ class VideoDownloader:
 
 
         if status == "finished" and ("movefiles" in ppname):
-            print("\033[1m FINISHED MERGING \033[0m")
+            # print("\033[1m FINISHED MERGING \033[0m")
             # call the save to database and also send the data to frontend!
             db_data = {"videoId": video_id, "filepath": filepath, "filesize": filesize, "title": title, "thumbnail": thumbnail, "duration_string": duration, "resolution": resolution}
             frontend_data = {"id": video_id, "downloaded": True, "processing": False}
             self.save_data_to_db(db_data)
             self.frontend_comms.send_download_complete(frontend_data)
-            print(f"\033[93m {frontend_data} \033[0m")
+            # print(f"\033[93m {frontend_data} \033[0m")
 
 
     def generate_ydl_ops(self, is_short, vcodec, filename, video_quality, save_location):

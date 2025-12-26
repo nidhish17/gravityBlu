@@ -23,12 +23,12 @@ class YoutubeDownloader:
             webview.windows[0].evaluate_js(f"updateProgressFromPy({json.dumps(data)})")
 
     def send_download_complete(self, data):
-        print("sending: ", data)
+        # print("sending: ", data)
         with js_call_lock:
             webview.windows[0].evaluate_js(f"videoDownloadComplete({json.dumps(data)})")
 
     def send_download_error(self, data):
-        print("sending error", data)
+        # print("sending error", data)
         with js_call_lock:
             webview.windows[0].evaluate_js(f"downloadError({json.dumps(data)})")
 
@@ -37,14 +37,13 @@ class YoutubeDownloader:
         if not self.save_loc.get_user_save_loc()["specified"]:
             data = self.save_loc.specify_location()
             if not data.get("specified"):
-                print("Video won't be downloaded please specify location to download")
+                # print("Video won't be downloaded please specify location to download")
                 return {
                     "ok": False,
                     **data
                 }
         try:
             video_info = self.info.get_info(url)
-            print(video_info)
         except Exception as err:
             error_msg = str(err)
             error_details = ""
@@ -141,12 +140,9 @@ class YoutubeDownloader:
 
         def download_task():
             video_title = video_info.get("videoTitle")
-            print(video_title, "video title from python")
             try:
                 self.yt_audio_downloader.download_audio(url, video_title, self.send_download_progress, self.send_download_complete)
             except Exception as err:
-                print(err)
-                print(video_info.get("videoId"))
                 aud_meta = {
                     "id": video_info.get("videoId"),
                     "title": video_title,

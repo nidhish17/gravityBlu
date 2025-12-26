@@ -1,9 +1,16 @@
 import pathlib
+import sys
 
 
-ROOT_PATH = pathlib.Path(__file__).parent.parent.parent
-DENO_PATH = ROOT_PATH / "deno_runtime" / "deno.exe"
+def get_deno_path():
+    if getattr(sys, "frozen", False):
+        base_path = pathlib.Path(sys.executable).parent
+    else:
+        base_path = pathlib.Path(__file__).parent.parent.parent
 
+    return base_path / "deno_runtime" / "deno.exe"
+
+DENO_PATH = get_deno_path()
 
 DEFAULT_OPTS = {
     "noprogress": True,
