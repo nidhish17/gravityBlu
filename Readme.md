@@ -22,7 +22,7 @@
   - if downloader does not work for some reason make sure the yt-dlp package is up-to-date
     - you can check by using the cmd &rarr; pip show yt-dlp
     - crosscheck in pypi website &rarr; https://pypi.org/project/yt-dlp/ 
-    - if update is available then upgrade it by using t5his cmd
+    - if update is available then upgrade it by using this cmd
       - pip install yt-dlp -U
 - To freeze app using pyinstaller
   - <pre lang="python">

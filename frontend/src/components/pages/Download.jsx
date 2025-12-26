@@ -34,8 +34,9 @@ const Download = function ({loading, setLoading}) {
                 videoInfo = await window.pywebview.api.yt_api.download_yt_audio(downloadUrl);
             }
             if (!videoInfo.ok) {
-                toast.error(videoInfo?.error || "something went wrong");
-                console.log(videoInfo);
+                // don't trigger toast here as the backend triggers the error
+                // toast.error(videoInfo?.details || "something went wrong");
+                // console.log(videoInfo, "video info");
                 return;
             }
             const {videoInformation} = videoInfo.data;
@@ -52,12 +53,12 @@ const Download = function ({loading, setLoading}) {
                 processing: false,
                 downloadType: downloadType
             }
-            console.log(newDownload);
+            console.log("New Download: ", newDownload);
             setDownloads(newDownload);
             setDownloadUrl("");
         } catch (err) {
-            // console.log(err);
-            toast.error("something went wrong.");
+            // console.log(err.toString());
+            toast.error("Something went wrong");
         } finally {
             setLoading(false)
         }

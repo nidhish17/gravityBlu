@@ -42,8 +42,30 @@ class YoutubeDownloader:
                     "ok": False,
                     **data
                 }
+        try:
+            video_info = self.info.get_info(url)
+            print(video_info)
+        except Exception as err:
+            error_msg = str(err)
+            error_details = ""
+            if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
+                error_details = "Age-Restricted content cannot be downloaded!"
+            else:
+                error_details = str(err)
 
-        video_info = self.info.get_info(url)
+            self.send_download_error({
+                "ok": False,
+                "status": Status.ERROR.value,
+                "details": error_details,
+                "metadata": {"title": "", "url": url, "id": ""}
+            })
+            return {
+                "ok": False,
+                "status": Status.ERROR.value,
+                "details": str(err)
+            }
+
+
         vid_meta = {
             "id": video_info.get("videoId"),
             "url": url,
@@ -61,6 +83,7 @@ class YoutubeDownloader:
                     }
                 }
             except Exception as err:
+                # print(err, "............................................................")
                 self.send_download_error({
                     "ok": False,
                     "status": Status.ERROR.value,
@@ -94,9 +117,27 @@ class YoutubeDownloader:
                     "ok": False,
                     **data
                 }
+        try:
+            video_info = self.info.get_info(url)
+            video_info["videoId"] = f"{video_info.get('videoId')}audio"
+        except Exception as err:
+            error_msg = str(err)
+            error_details = ""
+            if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
+                error_details = "Age-Restricted content cannot be downloaded!"
+            else: error_details = str(err)
 
-        video_info = self.info.get_info(url)
-        video_info["videoId"] = f"{video_info.get('videoId')}audio"
+            self.send_download_error({
+                "ok": False,
+                "status": Status.ERROR.value,
+                "details": error_details,
+                "metadata": {"title": "", "url": url, "id": ""}
+            })
+            return {
+                "ok": False,
+                "status": Status.ERROR.value,
+                "details": str(err)
+            }
 
         def download_task():
             video_title = video_info.get("videoTitle")

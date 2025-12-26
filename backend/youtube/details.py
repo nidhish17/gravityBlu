@@ -1,6 +1,7 @@
 from yt_dlp import YoutubeDL
 from backend.user.database import User
-
+from yt_dlp.utils import DownloadError
+from backend.youtube.ytdlp_config import get_opts
 # db = TinyDB("video_info.json")
 
 class VideoInformation:
@@ -14,8 +15,9 @@ class VideoInformation:
             # db.insert(video_info)
             try:
                 selected_format = video_info.get("requested_formats")[0]
-            except:
+            except DownloadError:
                 selected_format = {}
+                raise
             info_obj = {
                 "videoTitle": video_info.get("title"),
                 "videoDuration": video_info.get("duration_string"),
@@ -35,7 +37,7 @@ class VideoInformation:
             return info_obj
 
     def get_ydl_opts(self, video_quality):
-        return {
+        return get_opts({
             "forcejson": True,
             "noplaylist": True,
             "format": (
@@ -44,7 +46,7 @@ class VideoInformation:
                 f"/best[ext=mp4][height<={video_quality}]"
                 f"/best[ext=mp4]"
             ),
-        }
+        })
 
     def video_formats(self, formats):
         hd_formats = []

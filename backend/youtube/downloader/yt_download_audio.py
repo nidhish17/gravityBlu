@@ -7,6 +7,7 @@ from yt_dlp import YoutubeDL
 
 from backend.utils.utils import generate_filename, FFMPEG_PATH
 
+from backend.youtube.ytdlp_config import get_opts
 
 class AudioDownloader:
     def __init__(self):
@@ -26,7 +27,7 @@ class AudioDownloader:
         with YoutubeDL(ydl_opts) as ydl:
             downloaded_info = ydl.extract_info(url, download=True)
             # save the download to the database
-            save_loc = os.path.join(save_location, filename)
+            save_loc = os.path.join(save_location, f"{filename}.mp3")
             filesize = downloaded_info.get("filesize_approx", "")
             title = downloaded_info.get("title")
             thumbnail = downloaded_info.get("thumbnail")
@@ -68,23 +69,17 @@ class AudioDownloader:
 
     def generate_ydl_opts(self, filename, save_location):
 
-        ydl_opts = {
+        ydl_opts = get_opts({
             "outtmpl": os.path.join(save_location, filename),
-            "forcejson": True,
-            "noplaylist": True,
             "format": "bestaudio[ext=m4a]/best",
             "ffmpeg_location": self.ffmpeg_path,
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
-                "preferredquality": "0"
+                "preferredquality": "192"
             }],
             "merge_output_format": "mp3",
-            "no_color": True,
-            "noprogress": True,
-            "quiet": True,
-            "no_warnings": True
-        }
+        })
 
         return ydl_opts
 

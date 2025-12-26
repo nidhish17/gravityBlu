@@ -5,6 +5,8 @@ from backend.utils.utils import generate_filename, FFMPEG_PATH
 from typing import Callable
 
 from backend.youtube.frontend_comms import Comms
+from yt_dlp.utils import DownloadError
+from backend.youtube.ytdlp_config import get_opts
 
 
 class VideoDownloader:
@@ -119,8 +121,14 @@ class VideoDownloader:
 
         # Download the video here!
         with YoutubeDL(ydl_opts) as ydl:
-            downloaded_info = ydl.extract_info(url, download=True)
-            save_loc = os.path.join(save_location, filename)
+            try:
+                downloaded_info = ydl.extract_info(url, download=True)
+                save_loc = os.path.join(save_location, filename)
+            except DownloadError as e:
+                error_msg = str(e).lower()
+                if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
+                    print("Age restricted video")
+                    raise Exception("Age-Restricted video cannot be downloaded!")
 
     def post_processor(self, d):
         # print(d)
@@ -158,11 +166,9 @@ class VideoDownloader:
 
         :return: returns generated ydl_options for downloading the video
         '''
-        ydl_opts = {
+        ydl_opts = get_opts({
             # "external_downloader": str(ARIA2C_PATH),
             # "external_downloader_args": ['-x', '16', '-k', '1M'],  # 16 connections, 1MB chunks
-            "forcejson": True,
-            "noplaylist": True,
             "format": (
                 f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
                 f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
@@ -175,11 +181,7 @@ class VideoDownloader:
             "merge_output_format": "mp4",
             # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
             "postprocessor_hooks": [self.post_processor],
-            "noprogress": True,
-            "quiet": True,
-            "no_warnings": True,
-            "no_color": True
-        }
+        })
 
         return ydl_opts
 

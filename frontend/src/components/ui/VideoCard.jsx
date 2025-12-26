@@ -30,7 +30,6 @@ const VideoCard = function ({
             setLoading(true);
             const data = await window.pywebview.api.open_file_location(filepath);
         } catch (err) {
-            console.error(err);
             toast.error("Something went wrong", {id: toastId});
             toast.dismiss(toastId);
         } finally {
@@ -115,7 +114,7 @@ const VideoCard = function ({
 
                             {/*open file location*/}
                             <button
-                                onClick={() => handleOpenFileLocation(`${downloadedDetail.saveLocation}.${downloadType === "video" ? "mp4" : downloadType === "audio" && "mp3"}`, videoTitle)}
+                                onClick={() => handleOpenFileLocation(`${downloadedDetail.saveLocation}`, videoTitle)}
                                 data-tooltip-id="tip" data-tooltip-content="Open File Location"
                                 className="hover:bg-neutral-800 cursor-pointer p-1 rounded disabled:animate-pulse disabled:cursor-not-allowed disabled:bg-neutral-900/80"
                                 disabled={loading}><FaRegFolderOpen
