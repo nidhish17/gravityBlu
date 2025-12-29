@@ -5,19 +5,20 @@ import useAppStore from "../../hooks/useAppStore.js";
 import {createPortal} from "react-dom";
 import {GrUpdate} from "react-icons/gr";
 import {MdClose} from "react-icons/md";
+import {IoIosCloudDownload} from "react-icons/io";
+import {HiFolderDownload} from "react-icons/hi";
+import {FaDownload} from "react-icons/fa";
 
 export const SidebarContext = createContext(null);
 
-const Navbar = function () {
+const Navbar = function ({page, setPage}) {
     const [showAside, setShowAside] = useState(false);
     const appUpdateAvailable = useAppStore(state => state.appUpdateAvailable);
 
     return (
-        <header className="px-8 py-6 bg-neutral-800/95 ">
-            <nav className="flex justify-between items-center">
-                <ul className="*:hover:text-amber-100 *:transition-colors *:cursor-pointer text-lg">
-                    <li className="font-bold">Youtube Video</li>
-                </ul>
+        <header className="px-4 py-6 bg-neutral-800/95 max-w-[72px]">
+            <nav className="flex flex-col justify-between items-center h-full">
+                {/*settings button / open sidebar button*/}
                 <button onClick={() => setShowAside((show) => !show)}
                         className={`hover:text-amber-100 transition-colors duration-200 cursor-pointer 
                         ${appUpdateAvailable &&
@@ -29,6 +30,30 @@ const Navbar = function () {
                 >
                     <AiOutlineSetting size={25}/>
                 </button>
+
+                {/*contains other things such as download vid, downloads, show downloading, show downloaded*/}
+                <ul className="*:hover:text-amber-100 *:transition-colors *:cursor-pointer text-lg flex flex-col gap-y-5">
+                    <button onClick={() => setPage("download")}
+                        className={`bg-neutral-600 hover:bg-neutral-700 p-1 rounded ${page === "download" && "outline-purple-600 outline-2 outline-offset-2 shadow-purple-700 shadow-sm"}`}
+                        data-tooltip-id = "tip"
+                        data-tooltip-content = "Download"
+                    >
+                        <IoIosCloudDownload size={25} />
+                    </button>
+
+                    <button onClick={() => setPage("finished")}
+                            className={`bg-neutral-600 hover:bg-neutral-700 p-1 rounded ${page === "finished" && "outline-purple-600 outline-2 outline-offset-2 shadow-purple-700 shadow-sm"}`}
+                            data-tooltip-id = "tip"
+                            data-tooltip-content = "Downloads"
+                        >
+                        <HiFolderDownload size={25} />
+                    </button>
+
+                    <CurrentlyDownloading setPage={setPage} page={page} />
+                </ul>
+                
+                <div className=""></div>
+                
             </nav>
             {appUpdateAvailable && <UpdateAvailablePortal setShowAside={setShowAside} />}
             <SidebarContext.Provider value={{setShowAside}}>
@@ -37,6 +62,25 @@ const Navbar = function () {
         </header>
     );
 }
+
+const CurrentlyDownloading = function ({setPage, page}) {
+    const totalVideosDownloading = 0;
+    return (
+        <button onClick={() => setPage("downloading")}
+                className={`relative cursor-pointer bg-neutral-600 hover:bg-neutral-700 p-1 rounded 
+                ${page === "downloading" && "outline-purple-600 outline-2 outline-offset-2 shadow-purple-700 shadow-sm"}`}
+                data-tooltip-id = "tip"
+                data-tooltip-content = "Downloading"
+        >
+            <FaDownload size={25}/>
+            <span className={`absolute rounded-full size-4 flex items-center justify-center bg-red-600
+                text-white top-0 right-0 text-xs font-bold translate-x-[60%] -translate-y-1/2`}>
+                <span>{totalVideosDownloading}</span>
+            </span>
+        </button>
+    )
+}
+
 
 const UpdateAvailablePortal = function ({setShowAside}) {
     const [showMessage, setShowMessage] = useState(true);

@@ -2,17 +2,21 @@ import Navbar from "./ui/Navbar.jsx";
 import {Toaster} from "react-hot-toast";
 import Downloader from "./Downloader.jsx";
 import {Tooltip} from "react-tooltip";
+import {useState} from "react";
 
 
 const AppLayout = function () {
 
+    const [page, setPage] = useState("download");
+
+
     return (
         <>
 
-            <main className="h-screen min-h-screen flex flex-col">
-                <Navbar/>
+            <main className="h-screen min-h-screen flex flex-row-reverse">
+                <Navbar page={page} setPage={setPage} />
 
-                <Downloader />
+                <Downloader page={page} setPage={setPage} />
 
             </main>
 
