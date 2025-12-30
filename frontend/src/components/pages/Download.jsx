@@ -66,23 +66,20 @@ const Download = function ({loading, setLoading}) {
     }
 
     return (
-        <div
-            className={`border-2 flex flex-col justify-center h-full border-dashed rounded-xl border-gray-500/60 hover:border-violet-600 p-4`}>
-            <div className="flex flex-col px-8 items-center gap-y-6">
-                <RiVideoDownloadFill className="-rotate-6" size={100}/>
-                <SearchBar disabled={loading} inputValue={downloadUrl} onSubmit={addDownload} inputType="url" onChange={(e) => setDownloadUrl(e.target.value)}>
-                    <div className="relative">
-                        <select disabled={loading} value={downloadType} onChange={(e) => setDownloadType(e.target.value)} className="text-sm appearance-none h-full rounded block pl-4 pr-8 bg-gray-700 text-neutral-100 outline-none disabled:animate-pulse disabled:bg-stone-500/80 disabled:pointer-events-none disabled:cursor-default">
-                            <option value="video">video</option>
-                            <option value="audio">audio</option>
-                        </select>
-                        <span className="absolute block right-1 inset- top-1/2 -translate-y-1/2 pointer-events-none"><FaCaretDown size={18} /></span>
-                    </div>
-                </SearchBar>
-                <h2 className="text-xl font-bold">Paste Your URL here to download high-quality video</h2>
-            </div>
+        <div className="flex flex-col items-center gap-y-6">
+            <SearchBar
+                disabled={loading}
+                inputValue={downloadUrl}
+                onSubmit={addDownload}
+                inputType="url"
+                setDownloadUrl={setDownloadUrl}
+                downloadType={downloadType}
+                setDownloadType={setDownloadType}
+            />
         </div>
     );
 }
+
+/*<h1>For the timeline create a horizontal scrollbar like in premiere pro to show all the time of the video! in a spaced out manner</h1>*/
 
 export default Download;
