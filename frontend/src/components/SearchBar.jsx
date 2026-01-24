@@ -10,7 +10,7 @@ const SearchBar = function ({setDownloadUrl, onSubmit, inputType, inputValue, di
     const handlePasteBtn = async function () {
         try {
             const text = await navigator.clipboard.readText();
-            if (text.includes("https://www.youtube.com")) {
+            if (text.includes("https://www.youtube.com") || text.includes("youtu.be")) {
                 setDownloadUrl(text);
             } else {
                 toast.error("Please enter a valid youtube url")

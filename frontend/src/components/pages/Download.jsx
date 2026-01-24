@@ -1,14 +1,25 @@
-import {RiVideoDownloadFill} from "react-icons/ri";
 import SearchBar from "../SearchBar.jsx";
 import useDownloadStore from "../../hooks/useDownloadStore.js";
 import {useState} from "react";
 import toast from "react-hot-toast";
 import {IoIosWarning} from "react-icons/io";
-import {FaCaretDown} from "react-icons/fa";
+import DownloadModeSelector from "../ui/DownloadModeSelector.jsx";
+import VideoPreviewCard from "../ui/VideoPreviewCard.jsx";
+import PreviewLoadingSkeleton from "../ui/PreviewLoadingSkeleton.jsx";
+import SegmentsDownloader from "../ui/SegmentsDownloader.jsx";
+import {motion, AnimatePresence} from "framer-motion";
 
-const Download = function ({loading, setLoading}) {
+const Download = function () {
+    // info loader
+    const [loading, setLoading] = useState(false);
+    const [addingDownload, setAddingDownload] = useState(false);
+
+
     const [downloadUrl, setDownloadUrl] = useState("");
     const [downloadType, setDownloadType] = useState("video");
+
+    const [downloadMode, setDownloadMode] = useState("full");
+    const [videoInfo, setVideoInfo] = useState(null);
 
     const setDownloads = useDownloadStore((state) => state.setDownloads);
 
@@ -25,7 +36,7 @@ const Download = function ({loading, setLoading}) {
         }
 
         try {
-            setLoading(true);
+            setAddingDownload(true);
             // change the call here! if audio selected then call the audio downloader instead of video
             let videoInfo;
             if (downloadType === "video") {
@@ -60,7 +71,27 @@ const Download = function ({loading, setLoading}) {
             // console.log(err.toString());
             toast.error("Something went wrong");
         } finally {
-            setLoading(false)
+            setAddingDownload(false)
+        }
+
+    }
+
+    const generateDownloadPreview = async function (e) {
+        if (downloadType === "audio") {
+            await addDownload(e);
+            return;
+        }
+        e.preventDefault();
+        try {
+            setLoading(true);
+            const videoInfo = await window.pywebview.api.yt_api.get_video_info(downloadUrl);
+            console.log(videoInfo);
+            setVideoInfo(videoInfo);
+        } catch (err) {
+            // console.log(err.message);
+            toast.error(err.message || "Something went wrong", {duration: 5000});
+        } finally {
+            setLoading(false);
         }
 
     }
@@ -68,18 +99,57 @@ const Download = function ({loading, setLoading}) {
     return (
         <div className="flex flex-col items-center gap-y-6">
             <SearchBar
-                disabled={loading}
+                disabled={loading || addingDownload}
                 inputValue={downloadUrl}
-                onSubmit={addDownload}
+                onSubmit={generateDownloadPreview}
                 inputType="url"
                 setDownloadUrl={setDownloadUrl}
                 downloadType={downloadType}
                 setDownloadType={setDownloadType}
             />
+            {loading ? <PreviewLoadingSkeleton /> : (
+                <>
+                    {/* videoInfo && */}
+                    {<DownloadModeSelector downloadMode={downloadMode} setDownloadMode={setDownloadMode} />}
+                    {/*add the logic here to change to segments and full video download*/}
+                    <AnimatePresence mode="wait">
+                        {downloadMode === "full" ? (
+                            <motion.div
+                                className="w-full"
+                                key="full-video"
+                                initial={{opacity: 0, x: -100, scale: 0.95}}
+                                animate={{opacity: 1, x: 0, scale: 1}}
+                                exit={{opacity: 0, x: -100, scale: 0.95}}
+                                transition={{duration: 0.2}}
+                            >
+                                <VideoPreviewCard videoInfo={videoInfo} addDownload={addDownload} disabled={addingDownload} />
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                className="w-full"
+                                key="segments"
+                                initial={{opacity: 0, x: 100, scale: 0.95}}
+                                animate={{opacity: 1, x: 0, scale: 1}}
+                                exit={{opacity: 0, x: 100, scale: 0.95}}
+                                transition={{duration: 0.2}}
+                            >
+                                <SegmentsDownloader videoInfo={videoInfo} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </>
+            )}
+
+
         </div>
     );
 }
 
 /*<h1>For the timeline create a horizontal scrollbar like in premiere pro to show all the time of the video! in a spaced out manner</h1>*/
+
+/*
+    implement user onboarding
+    allow users to select what loads by default full video download preview or segments
+*/
 
 export default Download;

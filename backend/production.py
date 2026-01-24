@@ -60,6 +60,7 @@ def app():
         height=APP_HEIGHT,
         width=APP_WIDTH,
         min_size=(MIN_APP_WIDTH, MIN_APP_HEIGHT),
+        resizable=False,
         js_api=api,
     )
 

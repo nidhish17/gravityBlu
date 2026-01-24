@@ -9,11 +9,11 @@ import useDownloadStore from "../hooks/useDownloadStore.js";
 const Downloader = function ({page, setPage}) {
 
     const totalVideosDownloading = useDownloadStore((state) => state.getTotalDownloading())
-    const [loading, setLoading] = useState(false);
+
 
     const renderPage = function () {
         if (page === "download") {
-            return <Download loading={loading} setLoading={setLoading}/>;
+            return <Download />;
         } else if (page === "finished") {
             return <Downloaded videosDownloading={totalVideosDownloading} />
         } else if (page === "downloading") {

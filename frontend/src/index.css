@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 @layer base {
     body {
         @apply bg-neutral-900 text-neutral-100 relative overflow-x-hidden;
@@ -9,12 +8,29 @@
 }
 
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .timeline-scrollbar::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .timeline-scrollbar::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    .timeline-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-stone-400 rounded;
+    }
+
+    .timeline-scrollbar::-webkit-scrollbar-track {
+        @apply bg-stone-700;
+    }
 }
 

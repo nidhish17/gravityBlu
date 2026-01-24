@@ -8,6 +8,7 @@ import {MdClose} from "react-icons/md";
 import {IoIosCloudDownload} from "react-icons/io";
 import {HiFolderDownload} from "react-icons/hi";
 import {FaDownload} from "react-icons/fa";
+import useDownloadStore from "../../hooks/useDownloadStore.js";
 
 export const SidebarContext = createContext(null);
 
@@ -64,7 +65,7 @@ const Navbar = function ({page, setPage}) {
 }
 
 const CurrentlyDownloading = function ({setPage, page}) {
-    const totalVideosDownloading = 0;
+    const totalVideosDownloading = useDownloadStore((state) => state.getTotalDownloading())
     return (
         <button onClick={() => setPage("downloading")}
                 className={`relative cursor-pointer bg-neutral-600 hover:bg-neutral-700 p-1 rounded 

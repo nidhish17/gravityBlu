@@ -23,14 +23,18 @@ class YoutubeDownloader:
             webview.windows[0].evaluate_js(f"updateProgressFromPy({json.dumps(data)})")
 
     def send_download_complete(self, data):
-        print("sending: ", data)
+        # print("sending: ", data)
         with js_call_lock:
             webview.windows[0].evaluate_js(f"videoDownloadComplete({json.dumps(data)})")
 
     def send_download_error(self, data):
-        print("sending error", data)
+        # print("sending error", data)
         with js_call_lock:
             webview.windows[0].evaluate_js(f"downloadError({json.dumps(data)})")
+
+    def get_video_info(self, url):
+        video_info = self.info.get_info(url)
+        return video_info
 
     def download_yt_video(self, url):
         # if the user has not specified the location return immediately
@@ -175,6 +179,10 @@ class YoutubeDownloader:
                 "videoInformation": video_info
             }
         }
+
+
+
+
 
 
 # youtube_downloader = YoutubeDownloader()

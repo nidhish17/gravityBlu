@@ -38,7 +38,8 @@ const Downloaded = function ({videosDownloading}) {
         }
 
         fetchDownloaded();
-    }, [videosDownloading]);
+    }, [videosDownloading]); // videosDownloading is required because as soon as one video downloads the num is
+    // subtracted and the downloads page needs to be updated with the newly downloaded video so this here is required!
 
     const handleDeleteDownload = async function (id) {
         console.log(id);

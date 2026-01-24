@@ -12,11 +12,14 @@ class VideoInformation:
         ydl_opts = self.get_ydl_opts(User.get(id=1).quality)
         with YoutubeDL(ydl_opts) as ydl:
             video_info = ydl.extract_info(url, download=False)
+            preview_url = self.get_preview_url(url)
             # db.insert(video_info)
             try:
                 selected_format = video_info.get("requested_formats")[0]
             except DownloadError:
                 selected_format = {}
+                raise
+            except Exception as e:
                 raise
             info_obj = {
                 "videoTitle": video_info.get("title"),
@@ -31,15 +34,15 @@ class VideoInformation:
                                    "filesize_approx": selected_format.get("filesize_approx", ""),
                                    "filesize": selected_format.get("filesize", "")},
                 "thumbnail": video_info.get("thumbnail"),
-                # "formats": self.video_formats(video_info.get("formats"))
+                "streaming_url": preview_url,
+                "durationSeconds": video_info.get("duration"),
+            # "formats": self.video_formats(video_info.get("formats"))
             }
 
             return info_obj
 
     def get_ydl_opts(self, video_quality):
         return get_opts({
-            "forcejson": True,
-            "noplaylist": True,
             "format": (
                 f"bestvideo[ext=mp4]{'[vcodec^=av01]' if video_quality >= 1440 else '[vcodec^=avc]'}[height<={video_quality}]+bestaudio[ext=m4a]"
                 f"/bestvideo[ext=mp4][height<={video_quality}]+bestaudio[ext=m4a]"
@@ -47,6 +50,15 @@ class VideoInformation:
                 f"/best[ext=mp4]"
             ),
         })
+
+    def get_preview_url(self, url):
+        preview_quality = 720
+        ydl_opts = get_opts({
+            "format": f"best[ext=mp4][height<={preview_quality}]/best[ext=mp4]"
+        })
+        with YoutubeDL(ydl_opts) as ydl:
+            video_info = ydl.extract_info(url, download=False)
+            return video_info.get("url")
 
     def video_formats(self, formats):
         hd_formats = []
