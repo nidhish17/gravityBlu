@@ -16,7 +16,9 @@ const AppLayout = function () {
             <main className="h-screen min-h-screen flex flex-row-reverse">
                 <Navbar page={page} setPage={setPage} />
 
-                <Downloader page={page} setPage={setPage} />
+                <div className="flex-1 overflow-y-scroll no-scrollbar">
+                    <Downloader page={page} setPage={setPage} />
+                </div>
 
             </main>
 

@@ -1,5 +1,5 @@
 import {IoMdCut} from "react-icons/io";
-import {formatSecondsToHHMMSS, getRandomColor} from "../../utils/utils.js";
+import {formatSecondsToHHMMSS, generateRandomRgbaColor, getRandomColor} from "../../utils/utils.js";
 import {Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {useEffect, useRef, useState, Fragment, useReducer} from "react";
 import {FaMinus, FaPlus} from "react-icons/fa";
@@ -95,8 +95,34 @@ const  Timeline = function ({videoDuration}) {
 
     // used to record the start time when the mouseDown is fired.
     const activeSegmentRefStartTime = useRef(null);
+    // segments created by the user and the selected segment by the user!
     const [segments, setSegments] = useState([]);
-    console.log(segments);
+    const [selectedSegmentId, setSelectedSegmentId] = useState(null);
+    // console.log(segments);
+
+    // for deleting a specific segment!
+    const deleteSegment = function (segId) {
+        setSegments((segments) => (
+            segments.filter((seg) => seg.id !== segId)
+        ));
+    }
+
+    // edit segment name and when it starts and when it ends
+    // Todo: implement editing when the segment start and ends
+    const editSegment = function ({segId, name, startSec, endSec}) {
+        setSegments((segments) => (
+            segments.map((seg) => {
+                if (seg.id === segId) {
+                    return {
+                        ...seg,
+                        name: name
+                        // Todo: later add startTime and endTime too here
+                    }
+                }
+                return seg;
+            })
+        ))
+    }
 
     // const activeSegmentRectRef = useRef(null);
     const selectionMarqueeRect = useRef( null);
@@ -157,8 +183,8 @@ const  Timeline = function ({videoDuration}) {
             return;
         }
 
-        const segmentColor = getRandomColor();
-        const newSegment = {startTime: startSec, endTime: sec, segmentColor};
+        const segmentColor = generateRandomRgbaColor(0.5);
+        const newSegment = {id: crypto.randomUUID(), startTime: startSec, endTime: sec, segmentColor, name: `Segment ${segments.length + 1}`};
         setSegments((prevSegments) => [...prevSegments, newSegment]);
 
         console.log(`Time Up: ${formatSecondsToHHMMSS(sec)}`);
@@ -180,7 +206,7 @@ const  Timeline = function ({videoDuration}) {
 
             <div ref={timelineContainerRef} className="relative bg-neutral-800 h-22 ring ring-neutral-700 p-px borde">
                 {/*overflow container*/}
-                <div onScroll={handleScroll} className="w-full overflow-x-scroll overflow-y-hidden timeline-scrollbar absolute bottom-0">
+                <div onScroll={handleScroll} className="w-full overflow-x-scroll overflow-y-hidden timeline-scrollbar absolute -bottom-0">
                     <div
                         style={{ width: pxPerSec * videoDuration, height: 1 }}
                         className={""}
@@ -211,8 +237,9 @@ const  Timeline = function ({videoDuration}) {
 
 
                             {/*Segments created by the user*/}
-                            {segments.map((seg, i) => {
-                                const {startTime, endTime, segmentColor} = seg;
+                            {/*contains the segment rect*/}
+                            {segments.map((seg) => {
+                                const {startTime, endTime, segmentColor, id} = seg;
                                 // startWorldX, endWorldX
                                 const startWX = startTime * pxPerSec;
                                 const endWX = endTime * pxPerSec
@@ -220,14 +247,17 @@ const  Timeline = function ({videoDuration}) {
 
                                 return (
                                     <Rect
-                                        key={i} opacity={0.3}
-                                        width={width} height={timelineHeight}
+                                        key={id}
+                                        // opacity={0.3}
+                                        width={width} height={79.5}
                                         fill={segmentColor}
                                         // as we subtract the scrollLeft we are calculating the screenX. screenX position or visible area position!
                                         x={startWX - scrollLeft}
                                         onMouseEnter={(e) => {e.target.getStage().container().style.cursor = 'pointer';}}
                                         onMouseLeave={(e) => e.target.getStage().container().style.cursor="crosshair"}
-                                        // onClick={}
+                                        strokeWidth={selectedSegmentId === id ? 2 : 0}
+                                        stroke={"#2b7fff"}
+                                        onClick={() => setSelectedSegmentId(id)}
                                     />
                                 )
                             })}
@@ -268,7 +298,14 @@ const  Timeline = function ({videoDuration}) {
 
             </div>
 
-            <SegmentControls clearSegments={() => setSegments([])} />
+            <SegmentControls
+                clearSegments={() => setSegments([])}
+                segments={segments}
+                deleteSegment={deleteSegment}
+                editSegment={editSegment}
+                selectedSegmentId={selectedSegmentId}
+                setSelectedSegmentId={setSelectedSegmentId}
+            />
 
         </div>
     );
@@ -293,10 +330,6 @@ const removeSelectionMarquee = function ({selectionMarqueeRect}) {
     selectionMarqueeRect.height(0);
 
 }
-
-
-
-
 
 
 export default Timeline;

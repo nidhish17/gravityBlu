@@ -37,5 +37,14 @@ function getRandomColor() {
   return "#" + color.padStart(6, '0');
 }
 
+function generateRandomRgbaColor(alpha) {
+  // Generate a random integer between 0 and 255 for R, G, and B
+  const r = Math.floor(Math.random() * 256);
+  const g = Math.floor(Math.random() * 256);
+  const b = Math.floor(Math.random() * 256);
 
-export {formatBytes, truncate, formatSecondsToHHMMSS, getRandomColor};
+  // Return the color string using a template literal
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export {formatBytes, truncate, formatSecondsToHHMMSS, getRandomColor, generateRandomRgbaColor};
