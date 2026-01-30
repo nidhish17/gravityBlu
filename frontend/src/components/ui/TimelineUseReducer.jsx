@@ -5,12 +5,17 @@ import {useEffect, useRef, useState, Fragment, useReducer} from "react";
 import {FaMinus, FaPlus} from "react-icons/fa";
 import toast from "react-hot-toast";
 import SegmentControls from "./SegmentControls.jsx";
+import SegmentRect from "./segment/SegmentRect.jsx";
+import TimelineModes from "./segment/TimelineModes.jsx";
+import {MODE_NAMES} from "./segment/constants.js";
+import {hover} from "motion";
 
 
 const initialState = {
     timelineHeight: 80,
     viewportWidth: 0,
-    pxPerSec: 10
+    pxPerSec: 10,
+    mode: MODE_NAMES.select,
 }
 
 const MIN_ZOOM = 7;
@@ -26,19 +31,21 @@ const timelineReducer = function (state, action) {
             return {...state, pxPerSec: Math.min(state.pxPerSec+1, MAX_ZOOM)};
         case "ZOOM_OUT":
             return {...state, pxPerSec: Math.max(state.pxPerSec-1, MIN_ZOOM)};
+        case "CHANGE_MODE":
+            return {...state, mode: action.payload};
         default:
             return state;
     }
 }
 
 
-const  Timeline = function ({videoDuration}) {
+const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
 
     const timelineContainerRef = useRef(null);
     const hoverLineRef = useRef(null);
 
     const [state, dispatch] = useReducer(timelineReducer, initialState);
-    const {pxPerSec, viewportWidth, timelineHeight} = state;
+    const {pxPerSec, viewportWidth, timelineHeight, mode: currentMode} = state;
 
     // how the timeline has been scrolled? used to calculate from what duration the start duration should be shown with respect to available viewport wiodth.
     const [scrollLeft, setScrollLeft] = useState(0);
@@ -124,6 +131,12 @@ const  Timeline = function ({videoDuration}) {
         ))
     }
 
+    // change modes function
+    const changeMode = function (mode) {
+        dispatch({type: "CHANGE_MODE", payload: mode});
+    }
+
+
     // const activeSegmentRectRef = useRef(null);
     const selectionMarqueeRect = useRef( null);
 
@@ -132,8 +145,9 @@ const  Timeline = function ({videoDuration}) {
         const pos = stage.getPointerPosition();
         if (!pos) return;
 
-        hoverLineRef.current.points([pos.x, 0, pos.x, timelineHeight]);
-        hoverLineRef.current.getLayer().batchDraw();
+        // hoverLineRef.current.points([pos.x, 0, pos.x, timelineHeight]);
+        // hoverLineRef.current.getLayer().batchDraw();
+
         if (pointerDown.current.pointerDown) {
             isDragging.current = true;
         }
@@ -175,19 +189,22 @@ const  Timeline = function ({videoDuration}) {
         pointerDown.current = {...pointerDown.current, pointerDown: false};
         removeSelectionMarquee({selectionMarqueeRect: selectionMarqueeRect.current});
 
-        const {startSec} = activeSegmentRefStartTime.current;
-        const totalSegDuration = Math.abs(sec - startSec);
+        // if the user is in create segments mode only then allow the user to create segments else no!
+        if (currentMode === MODE_NAMES.create) {
+            const {startSec} = activeSegmentRefStartTime.current;
+            const totalSegDuration = Math.abs(sec - startSec);
 
-        if (totalSegDuration < 5) {
-            toast.error("segment duration should be greater than 8secs.", {duration: 3000, position: "top-center", style: {background: "rgba(255, 255, 255, 0.8)"}});
-            return;
+            if (totalSegDuration < 5) {
+                toast.error("segment duration should be greater than 8secs.", {duration: 3000, position: "top-center", style: {background: "rgba(255, 255, 255, 0.8)"}});
+                return;
+            }
+
+            const segmentColor = generateRandomRgbaColor(0.5);
+            const newSegment = {id: crypto.randomUUID(), startTime: startSec, endTime: sec, segmentColor, name: `Segment ${segments.length + 1}`};
+            setSegments((prevSegments) => [...prevSegments, newSegment]);
+
+            console.log(`Time Up: ${formatSecondsToHHMMSS(sec)}`);
         }
-
-        const segmentColor = generateRandomRgbaColor(0.5);
-        const newSegment = {id: crypto.randomUUID(), startTime: startSec, endTime: sec, segmentColor, name: `Segment ${segments.length + 1}`};
-        setSegments((prevSegments) => [...prevSegments, newSegment]);
-
-        console.log(`Time Up: ${formatSecondsToHHMMSS(sec)}`);
     }
 
     return (
@@ -197,6 +214,7 @@ const  Timeline = function ({videoDuration}) {
                     <IoMdCut className="bg-rose-700/30 p-1 rounded" size={20} />
                     <h4 className="text-lg">Click and drag to create segments.</h4>
                 </div>
+                <TimelineModes currentMode={currentMode} setMode={changeMode} />
                 <div className="flex gap-3 items-center">
                     <button onClick={handleTimelineZoom} name="decrement" className="rounded-full p-1 ring-2"><FaMinus /></button>
                     <span className="font-mono tabular-nums w-10 text-center">{zoomPercentage}%</span>
@@ -216,48 +234,51 @@ const  Timeline = function ({videoDuration}) {
                 <div className="absolute pointer-events-none inset-0">
                     {/*track*/}
                     <Stage
-                        className={`hover:cursor-crosshair pointer-events-auto`}
+                        className={`pointer-events-auto`}
                         width={viewportWidth}
                         height={80}
                         onMouseMove={handleMouseMove}
                         onPointerDown={handleMouseDown}
                         onPointerUp={handleMouseUp}
+                        onMouseEnter={(e) => {
+                            const stage = e.target.getStage();
+                            console.log("Mouse entered stage!", currentMode);
+                            let cursorType = "default";
+                            if (currentMode === MODE_NAMES.create){
+                                cursorType = "crosshair";
+                                console.log("cursor type crosshair!");
+                            } else cursorType = "default";
+                            console.log("cursor set to: ", cursorType)
+                            stage.container().style.cursor = cursorType;
+                        }}
                     >
                         <Layer>
                             {/*Timeline red line*/}
                             <Line
                                 stroke="oklch(58.6% 0.253 17.585)"
                                 strokeWidth={2}
-                                opacity={0.5}
-                                ref={hoverLineRef}
+                                opacity={1}
+                                ref={playHeadRef}
                             />
 
-
-                            <Rect ref={selectionMarqueeRect} />
+                            {/*selection marquee Rect*/}
+                            {currentMode !== MODE_NAMES.edit && (
+                                <Rect ref={selectionMarqueeRect} />
+                            )}
 
 
                             {/*Segments created by the user*/}
                             {/*contains the segment rect*/}
                             {segments.map((seg) => {
-                                const {startTime, endTime, segmentColor, id} = seg;
-                                // startWorldX, endWorldX
-                                const startWX = startTime * pxPerSec;
-                                const endWX = endTime * pxPerSec
-                                const width = endWX - startWX;
-
                                 return (
-                                    <Rect
-                                        key={id}
-                                        // opacity={0.3}
-                                        width={width} height={79.5}
-                                        fill={segmentColor}
-                                        // as we subtract the scrollLeft we are calculating the screenX. screenX position or visible area position!
-                                        x={startWX - scrollLeft}
-                                        onMouseEnter={(e) => {e.target.getStage().container().style.cursor = 'pointer';}}
-                                        onMouseLeave={(e) => e.target.getStage().container().style.cursor="crosshair"}
-                                        strokeWidth={selectedSegmentId === id ? 2 : 0}
-                                        stroke={"#2b7fff"}
-                                        onClick={() => setSelectedSegmentId(id)}
+                                    // contains the konva <Rect /> object along with other functionalities attached!
+                                    <SegmentRect
+                                        key={seg.id}
+                                        segment={seg}
+                                        pxPerSec={pxPerSec} scrollLeft={scrollLeft}
+                                        selectedSegmentId={selectedSegmentId}
+                                        setSelectedSegmentId={setSelectedSegmentId}
+                                        currentMode={currentMode}
                                     />
                                 )
                             })}
@@ -289,7 +310,7 @@ const  Timeline = function ({videoDuration}) {
                                 )
                             })}
 
-                            <Rect />
+                            {/*<Rect />*/}
 
                         </Layer>
                     </Stage>
@@ -332,7 +353,7 @@ const removeSelectionMarquee = function ({selectionMarqueeRect}) {
 }
 
 
-export default Timeline;
+export default TimelineUserReducer;
 
 
 

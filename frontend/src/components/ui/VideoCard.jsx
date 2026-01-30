@@ -5,7 +5,7 @@ import {MdOutlineVideoStable} from "react-icons/md";
 import {CiClock2, CiSaveDown1} from "react-icons/ci";
 import {useEffect, useState} from "react";
 import {formatBytes} from "../../utils/utils.js";
-import {IoMusicalNotesSharp} from "react-icons/io5";
+import {IoFolderOpen, IoMusicalNotesSharp} from "react-icons/io5";
 import toast from "react-hot-toast";
 
 const VideoCard = function ({
@@ -116,9 +116,10 @@ const VideoCard = function ({
                             <button
                                 onClick={() => handleOpenFileLocation(`${downloadedDetail.saveLocation}`, videoTitle)}
                                 data-tooltip-id="tip" data-tooltip-content="Open File Location"
-                                className="hover:bg-neutral-800 cursor-pointer p-1 rounded disabled:animate-pulse disabled:cursor-not-allowed disabled:bg-neutral-900/80"
-                                disabled={loading}><FaRegFolderOpen
-                                size={25}/>
+                                className="cursor-pointer p-2 rounded-full disabled:animate-pulse
+                                 disabled:cursor-not-allowed disabled:bg-neutral-900/80 transition-colors duration-200"
+                                disabled={loading}>
+                                <IoFolderOpen size={25} className="fill-white hover:fill-amber-200/80 transition-all duration-200" />
                             </button>
                         </div>
                     )}

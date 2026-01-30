@@ -61,7 +61,7 @@ const Downloaded = function ({videosDownloading}) {
     }
 
     return (
-        <div className={`flex flex-col justify-between grow`}>
+        <div className={`flex flex-col justify-between h-full`}>
             <div className="flex flex-col gap-y-4 grow">
                 <hr className="text-gray-500/60"/>
                 <div className="relative grow">

@@ -23,7 +23,7 @@ const Downloader = function ({page, setPage}) {
 
 
     return (
-        <Section className={`flex flex-col gap-y-6 basis-full`}>
+        <Section className={`flex flex-col gap-y-6 basis-full h-full`}>
             {renderPage()}
             {/*this is the page renderer and the above is the navbar for setting what page to load*/}
             {/*{page === "download" ? <Download loading={loading} setLoading={setLoading}/> : page === "downloading" ?*/}
