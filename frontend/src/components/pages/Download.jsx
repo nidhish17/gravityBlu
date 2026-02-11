@@ -6,7 +6,7 @@ import {IoIosWarning} from "react-icons/io";
 import DownloadModeSelector from "../ui/DownloadModeSelector.jsx";
 import VideoPreviewCard from "../ui/VideoPreviewCard.jsx";
 import PreviewLoadingSkeleton from "../ui/PreviewLoadingSkeleton.jsx";
-import SegmentsDownloader from "../ui/SegmentsDownloader.jsx";
+import PlaybackManager from "../ui/segment/PlaybackManager.jsx";
 import {motion, AnimatePresence} from "framer-motion";
 
 const Download = function () {
@@ -82,6 +82,15 @@ const Download = function () {
             return;
         }
         e.preventDefault();
+        if (!downloadUrl || (!downloadUrl.includes("youtube.com/watch") && !downloadUrl.includes("youtu.be/") && !downloadUrl.includes("youtube.com"))) {
+            toast("please enter a valid youtube url", {
+                duration: 3000,
+                icon: <IoIosWarning className="text-yellow-400" size={25}/>
+            });
+            setDownloadUrl("");
+            return;
+        }
+
         try {
             setLoading(true);
             const videoInfo = await window.pywebview.api.yt_api.get_video_info(downloadUrl);
@@ -96,6 +105,24 @@ const Download = function () {
 
     }
 
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center gap-y-6">
+                <SearchBar
+                    disabled={loading || addingDownload}
+                    inputValue={downloadUrl}
+                    onSubmit={generateDownloadPreview}
+                    inputType="url"
+                    setDownloadUrl={setDownloadUrl}
+                    downloadType={downloadType}
+                    setDownloadType={setDownloadType}
+                />
+                <PreviewLoadingSkeleton/>
+            </div>
+        )
+    }
+
+
     return (
         <div className="flex flex-col items-center gap-y-6">
             <SearchBar
@@ -107,10 +134,9 @@ const Download = function () {
                 downloadType={downloadType}
                 setDownloadType={setDownloadType}
             />
-            {loading ? <PreviewLoadingSkeleton /> : (
+            {videoInfo && (
                 <>
-                    {/* videoInfo && */}
-                    {<DownloadModeSelector downloadMode={downloadMode} setDownloadMode={setDownloadMode} />}
+                    <DownloadModeSelector downloadMode={downloadMode} setDownloadMode={setDownloadMode}/>
                     {/*add the logic here to change to segments and full video download*/}
                     <AnimatePresence mode="wait">
                         {downloadMode === "full" ? (
@@ -122,7 +148,8 @@ const Download = function () {
                                 exit={{opacity: 0, x: -100, scale: 0.95}}
                                 transition={{duration: 0.2}}
                             >
-                                <VideoPreviewCard videoInfo={videoInfo} addDownload={addDownload} disabled={addingDownload} />
+                                <VideoPreviewCard videoInfo={videoInfo} addDownload={addDownload}
+                                                  disabled={addingDownload}/>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -133,7 +160,7 @@ const Download = function () {
                                 exit={{opacity: 0, x: 100, scale: 0.95}}
                                 transition={{duration: 0.2}}
                             >
-                                <SegmentsDownloader videoInfo={videoInfo} />
+                                <PlaybackManager videoInfo={videoInfo}/>
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -23,7 +23,9 @@
     - you can check by using the cmd &rarr; pip show yt-dlp
     - crosscheck in pypi website &rarr; https://pypi.org/project/yt-dlp/ 
     - if update is available then upgrade it by using this cmd
-      - pip install yt-dlp -U
+    - <pre lang="python">
+        pip install yt-dlp -U
+      </pre>
 - To freeze app using pyinstaller
   - <pre lang="python">
       pyinstaller backend/production.py --name="GravityBlu" --onefile --icon="assets/icon.png" --add-data "./backend/frontend_production;frontend_production" --noconsole

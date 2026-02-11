@@ -1,5 +1,5 @@
-import {HiOutlinePencil, HiOutlineTrash} from "react-icons/hi2";
-import {formatSecondsToHHMMSS} from "../../utils/utils.js";
+import {HiOutlineTrash} from "react-icons/hi2";
+import {formatSecondsToHHMMSS} from "../../../utils/utils.js";
 import SegmentEditForm from "./SegmentEditForm.jsx";
 
 const SegmentControls = function ({clearSegments, segments, deleteSegment, selectedSegmentId, setSelectedSegmentId, editSegment}) {
@@ -26,7 +26,7 @@ const SegmentControls = function ({clearSegments, segments, deleteSegment, selec
                 </button>
             </div>
 
-
+            {/**/}
             <div className={`flex flex-wrap gap-5 justify-between *:grow`}>
                 {segments.map((segment) => <SegmentInfoBox
                     key={segment.id}
@@ -51,7 +51,9 @@ const SegmentInfoBox = function ({segment, deleteSegment, setSelectedSegmentId, 
     const duration = formatSecondsToHHMMSS(Math.abs(endTime - startTime));
 
     return (
-        <div onClick={() => setSelectedSegmentId(id)} className={`w-80 rounded-xl border border-slate-700 bg-[#111827] p-4 text-sm text-slate-300 shadow-lg ${selectedSegmentId === id && "ring-2 ring-blue-500"}`}>
+        <div onClick={() => setSelectedSegmentId(id)} className={`w-80 rounded-xl border border-slate-700 bg-[#111827] 
+        p-4 text-sm text-slate-300 shadow-lg ${selectedSegmentId === id ? "ring-2 ring-blue-500" : "hover:ring-gray-600 hover:ring-2"} hover:-translate-y-2 
+        transition-all duration-200 `}>
             <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-base font-medium text-white">
                     <span style={{backgroundColor: segmentColor}} className="h-3 w-3 rounded-full"/>

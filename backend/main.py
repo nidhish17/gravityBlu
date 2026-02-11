@@ -8,6 +8,7 @@ from backend.youtube.downloader.downloader_api import YoutubeDownloader
 import subprocess
 import os
 import sys
+import pyperclip
 
 class DownloaderApi:
     def __init__(self):
@@ -59,7 +60,8 @@ class DownloaderApi:
                 "data": str(e)
             }
 
-
+    def get_clipboard_text(self):
+        return pyperclip.paste()
 
     def about(self):
         return {

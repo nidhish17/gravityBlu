@@ -16,22 +16,24 @@ const TimelineModes = function ({currentMode, setMode}) {
                 <RxCardStackPlus size={18} />
             </ModeButton>
 
-            <ModeButton tipContent="Edit Mode" selectedMode={currentMode === edit} onClick={() => setMode(edit)}>
+            {/* onClick={() => setMode(edit)} */}
+            <ModeButton tipContent="COMING SOON" disabled selectedMode={currentMode === edit}>
                 <FiEdit3 size={18} className="fill-neutral-300" />
             </ModeButton>
         </div>
     );
 }
 
-const ModeButton = function ({children, tipContent, selectedMode, onClick}) {
+const ModeButton = function ({children, tipContent, selectedMode, onClick, disabled=false}) {
 
     const modeSelectedStyles = "ring-2 ring-blue-500";
 
     return (
         <button
-            onClick={onClick}
+            onClick={onClick} disabled={disabled}
             data-tooltip-id="tip" data-tooltip-content={tipContent}
-            className={`p-2 rounded-md bg-stone-700 hover:bg-stone-700/80 transition-all duration-200 cursor-pointer ${selectedMode && modeSelectedStyles}`}
+            className={`p-2 rounded-md bg-stone-700 hover:bg-stone-700/80 transition-all duration-200 
+            cursor-pointer ${selectedMode && modeSelectedStyles} disabled:cursor-default disabled:transition-none disabled:bg-stone-700/80`}
         >
             {children}
         </button>

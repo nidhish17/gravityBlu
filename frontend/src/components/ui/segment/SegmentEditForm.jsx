@@ -1,7 +1,7 @@
 import {HiCheck, HiOutlinePencil, HiOutlineTrash} from "react-icons/hi2";
 import {useEffect, useState} from "react";
 import toast from "react-hot-toast";
-import {formatSecondsToHHMMSS} from "../../utils/utils.js";
+import {formatSecondsToHHMMSS} from "../../../utils/utils.js";
 import {FaArrowsLeftRight} from "react-icons/fa6";
 
 const SegmentEditForm = function ({segments, selectedSegmentId, editSegment, deleteSegment}) {

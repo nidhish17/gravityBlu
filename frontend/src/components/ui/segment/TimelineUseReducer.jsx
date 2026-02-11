@@ -1,67 +1,23 @@
 import {IoMdCut} from "react-icons/io";
-import {formatSecondsToHHMMSS, generateRandomRgbaColor, getRandomColor} from "../../utils/utils.js";
+import {formatSecondsToHHMMSS, generateRandomRgbaColor} from "../../../utils/utils.js";
 import {Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {useEffect, useRef, useState, Fragment, useReducer} from "react";
 import {FaMinus, FaPlus} from "react-icons/fa";
 import toast from "react-hot-toast";
 import SegmentControls from "./SegmentControls.jsx";
-import SegmentRect from "./segment/SegmentRect.jsx";
-import TimelineModes from "./segment/TimelineModes.jsx";
-import {MODE_NAMES} from "./segment/constants.js";
-import {hover} from "motion";
+import SegmentRect from "./SegmentRect.jsx";
+import TimelineModes from "./TimelineModes.jsx";
+import {MAX_ZOOM, MIN_SEGMENT_DURATION, MIN_ZOOM, MODE_NAMES} from "./constants.js";
 
 
-const initialState = {
-    timelineHeight: 80,
-    viewportWidth: 0,
-    pxPerSec: 10,
-    mode: MODE_NAMES.select,
-}
+const  TimelineUserReducer = function ({videoDuration, playHeadRef, scrollLeftRef, handleScroll, tickersGroupRef, timelineContainerRef, state, dispatch, timelineLayerRef}) {
+    const scrollLeft = scrollLeftRef.current;
 
-const MIN_ZOOM = 7;
-const MAX_ZOOM = 20;
-
-const timelineReducer = function (state, action) {
-    switch (action.type) {
-        case "SET_VIEWPORT_WIDTH":
-            return {...state, viewportWidth: action.payload};
-        case "SET_TIMELINE_HEIGHT":
-            return {...state, timelineHeight: action.payload};
-        case "ZOOM_IN":
-            return {...state, pxPerSec: Math.min(state.pxPerSec+1, MAX_ZOOM)};
-        case "ZOOM_OUT":
-            return {...state, pxPerSec: Math.max(state.pxPerSec-1, MIN_ZOOM)};
-        case "CHANGE_MODE":
-            return {...state, mode: action.payload};
-        default:
-            return state;
-    }
-}
-
-
-const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
-
-    const timelineContainerRef = useRef(null);
     const hoverLineRef = useRef(null);
 
-    const [state, dispatch] = useReducer(timelineReducer, initialState);
     const {pxPerSec, viewportWidth, timelineHeight, mode: currentMode} = state;
 
-    // how the timeline has been scrolled? used to calculate from what duration the start duration should be shown with respect to available viewport wiodth.
-    const [scrollLeft, setScrollLeft] = useState(0);
-    const handleScroll = function (e) {
-        setScrollLeft(e.target.scrollLeft);
-    }
-
-    // for ui timeline
-    const startSec = Math.floor(scrollLeft / pxPerSec);
-    const endSec = Math.ceil((scrollLeft + viewportWidth) / pxPerSec);
-
-    // contains all the durations that would fit into the viewportwidth
-    const durationSeconds = [];
-    for (let i=startSec; i<endSec; i++) {
-        durationSeconds.push(i);
-    }
+    // const [durationSeconds, setDurationSeconds] = useState(calculateTickers({scrollLeft, pxPerSec, viewportWidth}));
 
     // zooms in/out the timeline. ps:- is just increases the space b/w tick so it appears as zoomed in;ie increasing pxPerSec
     const handleTimelineZoom = function (e) {
@@ -142,7 +98,8 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
 
     const handleMouseMove = function (e) {
         const stage = e.target.getStage();
-        const pos = stage.getPointerPosition();
+        const layer = timelineLayerRef.current;
+        const pos = layer.getRelativePointerPosition();
         if (!pos) return;
 
         // hoverLineRef.current.points([pos.x, 0, pos.x, timelineHeight]);
@@ -152,23 +109,29 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
             isDragging.current = true;
         }
         if (pointerDown.current.pointerDown && isDragging) {
-            const {pointerDownPosX: initialX} = pointerDown.current;
-            drawSelectionMarquee({initialX, currentX: pos.x, selectionMarqueeRect: selectionMarqueeRect.current, height: timelineHeight});
+            const {pointerDownPosX: initialX, pointerDownWorldX} = pointerDown.current;
+            drawSelectionMarquee(
+                {initialX: pointerDownWorldX, currentX: pos.x,
+                    selectionMarqueeRect: selectionMarqueeRect.current,
+                    height: timelineHeight, scrollLeft
+                }
+            );
         }
 
     }
 
     const handleMouseDown = function (e) {
         const stage = e.target.getStage();
-        const pos = stage.getPointerPosition();
+        const layer = timelineLayerRef.current;
+        const pos = layer.getRelativePointerPosition();
         if (!pos) return;
 
         const pointerX = pos.x;
-        const worldX = pointerX + scrollLeft
+        const worldX = pointerX //+ scrollLeft
         const timelinePos = worldX / pxPerSec;
         const sec = Math.round(timelinePos);
 
-        pointerDown.current = {...pointerDown.current, pointerDown: true, pointerDownPosX: pointerX};
+        pointerDown.current = {...pointerDown.current, pointerDown: true, pointerDownPosX: pointerX, pointerDownWorldX: worldX};
 
         activeSegmentRefStartTime.current = {startSec: sec};
         console.log(`Time: ${formatSecondsToHHMMSS(sec)}`);
@@ -177,11 +140,12 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
 
     const handleMouseUp = function (e) {
         const stage = e.target.getStage();
-        const pos = stage.getPointerPosition();
+        const layer = timelineLayerRef.current;
+        const pos = layer.getRelativePointerPosition();
         if (!pos) return;
 
         const pointerUpX = pos.x;
-        const worldX = pointerUpX + scrollLeft;
+        const worldX = pointerUpX //+ scrollLeft;
         const timelinePos = worldX / pxPerSec;
         const sec = Math.round(timelinePos);
 
@@ -194,8 +158,8 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
             const {startSec} = activeSegmentRefStartTime.current;
             const totalSegDuration = Math.abs(sec - startSec);
 
-            if (totalSegDuration < 5) {
-                toast.error("segment duration should be greater than 8secs.", {duration: 3000, position: "top-center", style: {background: "rgba(255, 255, 255, 0.8)"}});
+            if (totalSegDuration < MIN_SEGMENT_DURATION) {
+                toast.error(`segment duration should be greater than ${MIN_SEGMENT_DURATION-1} secs.`, {duration: 3000, position: "top-center", style: {background: "rgba(255, 255, 255, 0.8)"}});
                 return;
             }
 
@@ -242,17 +206,14 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
                         onPointerUp={handleMouseUp}
                         onMouseEnter={(e) => {
                             const stage = e.target.getStage();
-                            console.log("Mouse entered stage!", currentMode);
                             let cursorType = "default";
                             if (currentMode === MODE_NAMES.create){
                                 cursorType = "crosshair";
-                                console.log("cursor type crosshair!");
                             } else cursorType = "default";
-                            console.log("cursor set to: ", cursorType)
                             stage.container().style.cursor = cursorType;
                         }}
                     >
-                        <Layer>
+                        <Layer ref={timelineLayerRef}>
                             {/*Timeline red line*/}
                             <Line
                                 stroke="oklch(58.6% 0.253 17.585)"
@@ -275,40 +236,16 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
                                     <SegmentRect
                                         key={seg.id}
                                         segment={seg}
-                                        pxPerSec={pxPerSec} scrollLeft={scrollLeft}
+                                        pxPerSec={pxPerSec}
                                         selectedSegmentId={selectedSegmentId}
                                         setSelectedSegmentId={setSelectedSegmentId}
                                         currentMode={currentMode}
+                                        timelineLayerRef={timelineLayerRef}
                                     />
                                 )
                             })}
 
-                            {durationSeconds.map((curSec, idx) => {
-                                const isMajor = curSec % 5 === 0;
-                                // small ticks
-                                if (!isMajor) return (
-                                    <Rect
-                                            key={curSec}
-                                            width={1.5} height={7}
-                                            x={(curSec * pxPerSec) - scrollLeft} y={10}
-                                            fill={"#A4A4A4"}
-                                    />
-                                );
-                                return (
-                                    <Fragment key={curSec}>
-                                        <Text text={formatSecondsToHHMMSS(curSec)}
-                                              // -15 is for centering the text
-                                              x={((curSec * pxPerSec) - scrollLeft) - 15} y={1}
-                                              fontSize={8} fill="white"
-                                        />
-                                        <Rect
-                                            width={1} height={14}
-                                            x={(curSec * pxPerSec) - scrollLeft} y={10}
-                                            fill={"#A4A4A4"}
-                                        />
-                                    </Fragment>
-                                )
-                            })}
+                            <Group ref={tickersGroupRef} />
 
                             {/*<Rect />*/}
 
@@ -332,7 +269,7 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef}) {
     );
 }
 
-const drawSelectionMarquee = function ({initialX, currentX, selectionMarqueeRect, height}) {
+const drawSelectionMarquee = function ({initialX, currentX, selectionMarqueeRect, height, scrollLeft}) {
     if (!selectionMarqueeRect) return;
 
     const width = currentX - initialX;

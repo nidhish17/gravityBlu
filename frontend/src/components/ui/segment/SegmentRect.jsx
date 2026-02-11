@@ -5,7 +5,7 @@ import {MODE_NAMES} from "./constants.js";
 const EDGE_THRESHOLD = 8;
 const {select, create, edit} = MODE_NAMES;
 
-const SegmentRect = function ({segment, scrollLeft, selectedSegmentId, setSelectedSegmentId, pxPerSec, currentMode}) {
+const SegmentRect = function ({segment, selectedSegmentId, setSelectedSegmentId, pxPerSec, currentMode, timelineLayerRef}) {
     const {id, startTime, endTime, segmentColor} = segment;
     // startWorldX, endWorldX
     const startWX = startTime * pxPerSec;
@@ -17,9 +17,10 @@ const SegmentRect = function ({segment, scrollLeft, selectedSegmentId, setSelect
 
     const handleMouseMove = function (e) {
         const stage = e.target.getStage();
-        if (!stage || !segmentRectRef.current) return;
+        const layer = e.target.getLayer();
+        if (!stage || !segmentRectRef.current || !layer) return;
 
-        const pos = stage.getPointerPosition();
+        const pos = layer.getRelativePointerPosition();
         const {x: pointerX} = pos;
         const rect = segmentRectRef.current;
         const rectX = rect.x();
@@ -30,7 +31,7 @@ const SegmentRect = function ({segment, scrollLeft, selectedSegmentId, setSelect
         if ((isLeftEdge || isRightEdge) && currentMode === edit) {
             stage.container().style.cursor = "ew-resize";
         } else if (currentMode === edit) {
-            let cursorType = "default"
+            let cursorType = "default";
             stage.container().style.cursor = cursorType;
         }
 
@@ -46,11 +47,6 @@ const SegmentRect = function ({segment, scrollLeft, selectedSegmentId, setSelect
 
     }
 
-    const handleOnMouseEnter = function (e) {
-        // let cursorType = "default";
-        // e.target.getStage().container().style.cursor = cursorType;
-    }
-
     const handleMouseLeave = function (e) {
         let cursorType = "default";
         if (currentMode === edit) {
@@ -64,6 +60,7 @@ const SegmentRect = function ({segment, scrollLeft, selectedSegmentId, setSelect
 
     const handlePointerUp = function () {
         pointerDown.current = false;
+        console.log("pointer up!");
     }
 
     const handleClick = function () {
@@ -80,12 +77,12 @@ const SegmentRect = function ({segment, scrollLeft, selectedSegmentId, setSelect
             // opacity={0.3}
             width={width} height={79.5}
             fill={segmentColor}
-            // as we subtract the scrollLeft we are calculating the screenX. screenX position or visible area position!
-            x={startWX - scrollLeft}
-            onMouseEnter={handleOnMouseEnter}
+            // nop need to subtract scrollLeft because the layer itself is being offset instead of individutally calculating everything!
+            x={startWX}
             onMouseLeave={handleMouseLeave}
             onMouseMove={handleMouseMove}
             onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
             strokeWidth={selectedSegmentId === id ? 2 : 0}
             stroke={"#2b7fff"}
             onClick={handleClick}
