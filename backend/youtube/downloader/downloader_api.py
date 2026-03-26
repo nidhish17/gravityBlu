@@ -1,4 +1,5 @@
 from backend.status import Status
+from backend.youtube.downloader.segment_downloader import SegmentDownloader
 from backend.youtube.downloader.yt_download_audio import AudioDownloader
 from backend.youtube.downloader.yt_download_video import VideoDownloader
 from backend.user.save_loc import SaveLocation
@@ -8,14 +9,18 @@ import webview
 from threading import Lock
 import json
 
+from backend.youtube.frontend_comms import Comms
+
 js_call_lock = Lock()
 
 class YoutubeDownloader:
     def __init__(self):
         self.yt_video_downloader = VideoDownloader()
         self.yt_audio_downloader = AudioDownloader()
+        self.segment_downloader = SegmentDownloader()
         self.save_loc = SaveLocation()
         self.info = VideoInformation()
+        self.comms = Comms()
 
     def send_download_progress(self, data):
         with js_call_lock:
@@ -181,7 +186,77 @@ class YoutubeDownloader:
         }
 
 
+    def download_segments(self, data):
+        # if the user has not specified the location return immediately
+        if not self.save_loc.get_user_save_loc()["specified"]:
+            data = self.save_loc.specify_location()
+            if not data.get("specified"):
+                print("Video won't be downloaded please specify location to download")
+                return {
+                    "ok": False,
+                    **data
+                }
 
+        err_obje = {
+                "message": "Please create segments to download",
+                "ok": False,
+                "status_code": 404
+            }
+
+        if not data:
+            return err_obje
+
+        try:
+            video_info = self.info.get_info(data.get("url", ""))
+        except Exception as err:
+            error_msg = str(err)
+            error_details = ""
+            if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
+                error_details = "Age-Restricted content cannot be downloaded!"
+            else: error_details = str(err)
+
+            self.send_download_error({
+                "ok": False,
+                "status": Status.ERROR.value,
+                "details": error_details,
+                "metadata": {"title": "", "url": data.get("url", ""), "id": ""}
+            })
+            return {
+                "ok": False,
+                "status": Status.ERROR.value,
+                "details": str(err)
+            }
+
+
+        def download_task():
+            try:
+                download_info = self.segment_downloader.download_segments(data)
+            except Exception as err:
+                print(err)
+                self.send_download_error({
+                    "ok": False,
+                    "status": Status.ERROR.value,
+                    "details": str(err),
+                    "metadata": {"title": "", "url": data.get("url", ""), "id": ""}
+                })
+                return {
+                    "ok": False,
+                    "status": Status.ERROR.value,
+                    "details": str(err)
+                }
+
+        # download_info = self.segment_downloader.download_segments(data)
+        threading.Thread(target=download_task).start()
+
+        return {
+            "message": "Download Started",
+            "ok": True,
+            "status": Status.PENDING.value,
+            "data": {
+                "downloadStarted": True
+            },
+            "videoInformation": video_info
+        }
 
 
 

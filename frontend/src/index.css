@@ -41,3 +41,48 @@
     }
 }
 
+@layer components {
+
+    #video-progress-input {
+        -webkit-appearance: none;
+        background: var(--color-neutral-700);
+        height: 3px;
+        border-radius: 50px;
+
+        background-image: linear-gradient(var(--color-red-500), var(--color-neutral-700));
+        background-size: 0 100%;
+        background-repeat: no-repeat;
+        cursor: pointer;
+    }
+
+    /*slider thumb */
+    #video-progress-input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 9px;height: 9px;
+        background-color: var(--color-red-500);
+        border-radius: 50%;
+    }
+
+    /*for firefox (not needed but for future proofing) */
+    #video-progress-input::-moz-range-thumb {
+        -webkit-appearance: none;
+        width: 9px;height: 9px;
+        background-color: var(--color-red-500);
+        border-radius: 50%;
+        border: none;
+    }
+
+    @keyframes gradient-spin {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+    .animated-gradient-border {
+        background: linear-gradient(270deg, #a855f7, #3b82f6, #ec4899, #6366f1);
+        background-size: 300% 300%;
+        animation: gradient-spin 6s ease infinite;
+    }
+
+
+}

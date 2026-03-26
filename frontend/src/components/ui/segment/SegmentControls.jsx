@@ -1,41 +1,28 @@
 import {HiOutlineTrash} from "react-icons/hi2";
 import {formatSecondsToHHMMSS} from "../../../utils/utils.js";
 import SegmentEditForm from "./SegmentEditForm.jsx";
+import ProgressInput from "./ProgressInput.jsx";
 
-const SegmentControls = function ({clearSegments, segments, deleteSegment, selectedSegmentId, setSelectedSegmentId, editSegment}) {
+const SegmentControls = function ({segments, deleteSegment, selectedSegmentId, setSelectedSegmentId, editSegment, seekTo}) {
 
     return (
-        <div className={`borde space-y-6`}>
-
+        <div className={`flex flex-col gap-6`}>
             <SegmentEditForm segments={segments} selectedSegmentId={selectedSegmentId} editSegment={editSegment} deleteSegment={deleteSegment} />
 
-            <div className="flex justify-between items-center gap-4">
-                <div className="ring-1 ring-gray-700 flex items-center justify-center p-1 rounded-md basis-full gap-3 focus-within:ring-gray-500 transition-colors duration-200">
-                    <input type="text" className="px-4 py-2 rounded outline-none font-semibold w-full"
-                           placeholder="HH:MM:SS"/>
-                    <button className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 transition-colors cursor-pointer">
-                        Jump
-                    </button>
-                </div>
-
-                <button
-                    onClick={clearSegments}
-                    className="px-4 py-3 rounded-md hover:bg-white/80 text-black transition-all duration-200 bg-white
-                     cursor-pointer font-semibold basis-1/6 ring-offset-4 ring-offset-neutral-900 ring-white hover:ring-offset-0">
-                    Clear Segments
-                </button>
-            </div>
-
             {/**/}
-            <div className={`flex flex-wrap gap-5 justify-between *:grow`}>
-                {segments.map((segment) => <SegmentInfoBox
-                    key={segment.id}
-                    segment={segment}
-                    deleteSegment={deleteSegment}
-                    selectedSegmentId={selectedSegmentId}
-                    setSelectedSegmentId={setSelectedSegmentId}
-                />)}
-            </div>
+            {segments && (
+                <div className={`fle flex-wrap gap-5 justify-between *:gro grid grid-cols-3 items-center auto-cols-min`}>
+                    {segments.map((segment) => <SegmentInfoBox
+                        key={segment.id}
+                        segment={segment}
+                        deleteSegment={deleteSegment}
+                        selectedSegmentId={selectedSegmentId}
+                        setSelectedSegmentId={setSelectedSegmentId}
+                        seekTo={seekTo}
+                    />)}
+                </div>
+            )}
+
 
 
         </div>
@@ -43,15 +30,20 @@ const SegmentControls = function ({clearSegments, segments, deleteSegment, selec
 }
 
 
-const SegmentInfoBox = function ({segment, deleteSegment, setSelectedSegmentId, selectedSegmentId}) {
+const SegmentInfoBox = function ({segment, deleteSegment, setSelectedSegmentId, selectedSegmentId, seekTo}) {
     const {id, name, startTime, endTime, segmentColor} = segment;
 
     const startTimeFormatted = formatSecondsToHHMMSS(startTime);
     const endTimeFormatted = formatSecondsToHHMMSS(endTime);
     const duration = formatSecondsToHHMMSS(Math.abs(endTime - startTime));
 
+    const handleClick = function (e) {
+        setSelectedSegmentId(id);
+        seekTo(segment.startTime);
+    }
+
     return (
-        <div onClick={() => setSelectedSegmentId(id)} className={`w-80 rounded-xl border border-slate-700 bg-[#111827] 
+        <div onClick={handleClick} className={`w-80 rounded-xl border border-slate-700 bg-[#111827] 
         p-4 text-sm text-slate-300 shadow-lg ${selectedSegmentId === id ? "ring-2 ring-blue-500" : "hover:ring-gray-600 hover:ring-2"} hover:-translate-y-2 
         transition-all duration-200 `}>
             <div className="mb-4 flex items-center justify-between">
@@ -60,7 +52,10 @@ const SegmentInfoBox = function ({segment, deleteSegment, setSelectedSegmentId, 
                     {name}
                 </div>
                 <div className="flex gap-3">
-                    <button className="" onClick={() => deleteSegment(id)}>
+                    <button className="" onClick={(e) => {
+                        deleteSegment(id);
+                        e.stopPropagation();
+                    }}>
                         <HiOutlineTrash className="h-4 w-4 cursor-pointer text-red-400 hover:text-red-300" />
                     </button>
                 </div>

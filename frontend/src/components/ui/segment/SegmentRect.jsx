@@ -5,7 +5,7 @@ import {MODE_NAMES} from "./constants.js";
 const EDGE_THRESHOLD = 8;
 const {select, create, edit} = MODE_NAMES;
 
-const SegmentRect = function ({segment, selectedSegmentId, setSelectedSegmentId, pxPerSec, currentMode, timelineLayerRef}) {
+const SegmentRect = function ({segment, selectedSegmentId, setSelectedSegmentId, pxPerSec, currentMode, timelineLayerRef, seekTo}) {
     const {id, startTime, endTime, segmentColor} = segment;
     // startWorldX, endWorldX
     const startWX = startTime * pxPerSec;
@@ -66,6 +66,8 @@ const SegmentRect = function ({segment, selectedSegmentId, setSelectedSegmentId,
     const handleClick = function () {
         if (currentMode === select || currentMode === edit) {
             setSelectedSegmentId(id);
+            // play from the segment start or skip the timeline indicator to the start of the segment and play from there
+            seekTo(segment.startTime);
         }
     }
 

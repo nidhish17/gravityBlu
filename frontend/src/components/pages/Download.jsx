@@ -138,13 +138,13 @@ const Download = function () {
                 <>
                     <DownloadModeSelector downloadMode={downloadMode} setDownloadMode={setDownloadMode}/>
                     {/*add the logic here to change to segments and full video download*/}
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="wait" initial={false}>
                         {downloadMode === "full" ? (
                             <motion.div
                                 className="w-full"
                                 key="full-video"
                                 initial={{opacity: 0, x: -100, scale: 0.95}}
-                                animate={{opacity: 1, x: 0, scale: 1}}
+                                animate={{opacity: 1, x: 0, scale: 1, z:0.01}}
                                 exit={{opacity: 0, x: -100, scale: 0.95}}
                                 transition={{duration: 0.2}}
                             >
@@ -160,7 +160,7 @@ const Download = function () {
                                 exit={{opacity: 0, x: 100, scale: 0.95}}
                                 transition={{duration: 0.2}}
                             >
-                                <PlaybackManager videoInfo={videoInfo}/>
+                                <PlaybackManager videoInfo={videoInfo} />
                             </motion.div>
                         )}
                     </AnimatePresence>

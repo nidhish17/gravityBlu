@@ -2,8 +2,10 @@ import useDownloadStore from "../hooks/useDownloadStore.js";
 import toast from "react-hot-toast";
 import {truncate} from "../utils/utils.js";
 import download from "../components/pages/Download.jsx";
+import useSegmentDownloadStore from "../../store/useSegmentDownloadStore.js";
 
 const downloadStore = useDownloadStore.getState();
+const segmentDownloadStore = useSegmentDownloadStore.getState();
 
 window.addEventListener("pywebviewready", () => {
     window.updateProgressFromPy = function (data) {
@@ -33,6 +35,20 @@ window.addEventListener("pywebviewready", () => {
         removeDownload(id);
         toast.error(`Failed to download ${truncate(title, 10)} ${details}` || "failed to download", {duration: 6000});
         return "";
+    }
+
+    window.segmentDownloadProgress = function (data) {
+        console.log(data);
+        const {id, progressPercent, ...rest} = data;
+        segmentDownloadStore.updateDownload(id, {id, progress: progressPercent, ...rest});
+    }
+
+    window.segmentDownloadComplete = function (data) {
+        console.log(data);
+        const {id, downloaded, processing} = data;
+        segmentDownloadStore.downloadComplete(id, processing, downloaded);
+
+        console.log(segmentDownloadStore.downloads)
     }
 
 });

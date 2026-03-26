@@ -18,9 +18,9 @@ class VideoInformation:
                 selected_format = video_info.get("requested_formats")[0]
             except DownloadError:
                 selected_format = {}
-                raise
+                raise Exception("An error occurred please try again later")
             except Exception as e:
-                raise
+                raise Exception("An error occurred please try again later")
             info_obj = {
                 "videoTitle": video_info.get("title"),
                 "videoDuration": video_info.get("duration_string"),
@@ -36,6 +36,7 @@ class VideoInformation:
                 "thumbnail": video_info.get("thumbnail"),
                 "streaming_url": preview_url,
                 "durationSeconds": video_info.get("duration"),
+                "videoUrl": url
             # "formats": self.video_formats(video_info.get("formats"))
             }
 

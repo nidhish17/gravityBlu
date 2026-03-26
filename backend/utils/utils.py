@@ -23,6 +23,13 @@ def get_ffmpeg_path():
 
     return str(base_path / "ffmpeg" / "ffmpeg.exe")
 
+def get_ffmpeg_dir():
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys.executable).parent
+    else:
+        base_path = Path(__file__).resolve().parents[2]
+
+    return str(base_path / "ffmpeg")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FFMPEG_PATH = get_ffmpeg_path()

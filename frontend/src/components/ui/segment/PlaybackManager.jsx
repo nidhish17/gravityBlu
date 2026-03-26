@@ -1,11 +1,12 @@
 import {FaClock} from "react-icons/fa";
 import TimelineUseReducer from "./TimelineUseReducer.jsx";
-import {useEffect, useReducer, useRef} from "react";
+import {useEffect, useReducer, useRef, useState} from "react";
 import {MAX_ZOOM, MIN_ZOOM, MODE_NAMES} from "./constants.js";
 import {calculateTickers} from "./utils.js";
 import Konva from "konva";
 import {formatSecondsToHHMMSS} from "../../../utils/utils.js";
 import {MdOutlineFileDownload} from "react-icons/md";
+import SegmentsDownloader from "./SegmentsDownloader.jsx";
 
 
 const initialState = {
@@ -22,9 +23,9 @@ const timelineReducer = function (state, action) {
         case "SET_TIMELINE_HEIGHT":
             return {...state, timelineHeight: action.payload};
         case "ZOOM_IN":
-            return {...state, pxPerSec: Math.min(state.pxPerSec+1, MAX_ZOOM)};
+            return {...state, pxPerSec: Math.min(state.pxPerSec + 1, MAX_ZOOM)};
         case "ZOOM_OUT":
-            return {...state, pxPerSec: Math.max(state.pxPerSec-1, MIN_ZOOM)};
+            return {...state, pxPerSec: Math.max(state.pxPerSec - 1, MIN_ZOOM)};
         case "CHANGE_MODE":
             return {...state, mode: action.payload};
         default:
@@ -34,7 +35,11 @@ const timelineReducer = function (state, action) {
 
 const PlaybackManager = function ({videoInfo}) {
     // NOTE:- the streaming_url here means the preview url for the video
-    const {videoTitle="", streaming_url="", videoDuration="", durationSeconds=0} = videoInfo || {};
+    const {videoTitle = "", streaming_url = "", videoDuration = "", durationSeconds = 0, videoUrl} = videoInfo || {};
+
+    // segments created by the user and the selected segment by the user!
+    const [segments, setSegments] = useState([]);
+    const [segmentCount, setSegmentCount] = useState(0);
 
     const scrollLeftRef = useRef(0);
     const timelineLayerRef = useRef(null);
@@ -114,11 +119,13 @@ const PlaybackManager = function ({videoInfo}) {
 
     const updateTickers = function () {
         const group = tickersGroupRef.current;
-        if (!group) return;
+        const video = videoRef.current;
+        if (!group || !video) return;
 
         const scrollLeft = scrollLeftRef.current;
 
-        const newTickers = calculateTickers({scrollLeft, pxPerSec, viewportWidth});
+        const videoDuration = video.duration || durationSeconds;
+        const newTickers = calculateTickers({scrollLeft, pxPerSec, viewportWidth, videoDuration});
         group.destroyChildren();
 
         newTickers.forEach((curSec) => {
@@ -146,16 +153,25 @@ const PlaybackManager = function ({videoInfo}) {
         group.getLayer().batchDraw();
     }
 
+    const seekTo = function (startTime) {
+        const video = videoRef.current;
+        if (!video) return;
 
+        video.currentTime = startTime;
+        if (video.paused) {
+            video.play();
+        }
+    }
 
     return (
-        <div className="w-full space-y-6 *:ring-2 *:ring-offset-4 *:ring-offset-neutral-900 *:ring-gray-700 *:rounded *:p-2 mb-6">
+        <div
+            className="w-full space-y-6 *:ring-2 *:ring-offset-4 *:ring-offset-neutral-900 *:ring-gray-700 *:rounded *:p-2 mb-6">
             {/*video preview*/}
             <div className="flex gap-4 relative">
                 <video
                     src={streaming_url} ref={videoRef}
                     className={`aspect-video w-90 rounded bg-black`}
-                    autoPlay={true} loop controls
+                    autoPlay={true} loop
                     onLoadedData={updateTickers}
                     onPlay={startPlayHead}
                     onPause={stopPlayHead}
@@ -164,23 +180,19 @@ const PlaybackManager = function ({videoInfo}) {
                 </video>
 
 
-                <div className="self-stretch flex flex-col justify-between">
+                <div className="self-stretch flex flex-col justify-between basis-full">
                     <div className="space-y-2">
                         <p className="p-2 bg-gray-800 rounded px-4">{videoTitle}</p>
-                        <p className="w-fit text-sm flex gap-1 items-center px-3 rounded-full py-1 bg-gray-800"><FaClock className="fill-stone-500" size={18} /> {videoDuration}</p>
+                        <p className="w-fit text-sm flex gap-1 items-center px-3 rounded-full py-1 bg-gray-800"><FaClock
+                            className="fill-stone-500" size={18}/> {videoDuration}</p>
                     </div>
-                    <button className="bg-lime-600 hover:bg-lime-600/80 ring-2 self-start
-                    ring-offset-4 ring-offset-gray-800 ring-lime-500 hover:ring-offset-0 transition-all cursor-pointer
-                    duration-200 font-semibold px-4 py-2 rounded flex gap-x-1 items-center justify-center
-                    disabled:animate-pulse disabled:bg-stone-500/80 disabled:pointer-events-none disabled:cursor-default
-                    disabled:ring-stone-500/80 disabled:transition-none">
-                        <MdOutlineFileDownload size={25} />
-                        Download All Segments
-                    </button>
+                    <SegmentsDownloader videoUrl={videoUrl} segments={segments} clearSegments={() => setSegments([])} />
+
                 </div>
             </div>
 
             <TimelineUseReducer
+                segments={segments} setSegments={setSegments}
                 videoDuration={durationSeconds}
                 playHeadRef={playHeadRef}
                 scrollLeftRef={scrollLeftRef}
@@ -189,6 +201,10 @@ const PlaybackManager = function ({videoInfo}) {
                 state={state} dispatch={dispatch}
                 handleScroll={handleScroll}
                 timelineLayerRef={timelineLayerRef}
+                seekTo={seekTo}
+                videoRef={videoRef}
+                segmentCount={segmentCount}
+                incrementSegmentCount={() => setSegmentCount(c => c+1)}
             />
         </div>
     );

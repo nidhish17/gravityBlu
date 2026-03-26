@@ -48,13 +48,14 @@ class VideoDownloader:
         # if the user's selected quality is 1080p then don't care abt the max res just set vcodec to avc
         # if the user's selected quality is 2k or 4k and the max_res is also available to 2k or 4k then set it to av01
         # vcodec = "avc" if video_max_res <= 1920 else "av01" if self.video_quality >= 1440 else "avc"
+        # if the user has set 2k as their max res then if a video is not available at 2k then we should auto download it
+        # at 1080p or whatever is available. avc format is available for all res up until 1080p.
         if video_max_res >= 2560 and user_preferred_quality >= 1440:
             vcodec = "av01"
         else:
             vcodec = "avc"
 
-        ydl_opts = self.generate_ydl_ops(video_is_short, vcodec, filename, user_preferred_quality,
-                                         user_preferred_save_loc)
+        ydl_opts = self.generate_ydl_ops(video_is_short, vcodec, filename, user_preferred_quality, user_preferred_save_loc)
 
         return {
             "video_id": video_id,

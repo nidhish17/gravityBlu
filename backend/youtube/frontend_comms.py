@@ -23,5 +23,18 @@ class Comms:
         except Exception as e:
             print(f"An error occurred while sending download complete status to frontend\nError:\n\t\t{e}")
 
+    def send_segment_download_progress(self, data):
+        print("progress update invoked")
+        try:
+            with comms_lock:
+                webview.windows[0].evaluate_js(f"segmentDownloadProgress({json.dumps(data)})")
+        except Exception as e:
+            print(f"An error occurred while sending segment download progress to frontend\nError:\n\t\t{e}")
 
+    def send_segment_download_complete(self, data):
+        try:
+            with comms_lock:
+                webview.windows[0].evaluate_js(f"segmentDownloadComplete({json.dumps(data)})")
+        except Exception as e:
+            print(f"An error occurred while sending segment download complete status to frontend\nError:\n\t\t{e}")
 

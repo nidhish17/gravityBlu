@@ -8,13 +8,11 @@ import SegmentControls from "./SegmentControls.jsx";
 import SegmentRect from "./SegmentRect.jsx";
 import TimelineModes from "./TimelineModes.jsx";
 import {MAX_ZOOM, MIN_SEGMENT_DURATION, MIN_ZOOM, MODE_NAMES} from "./constants.js";
+import ProgressInput from "./ProgressInput.jsx";
 
 
-const  TimelineUserReducer = function ({videoDuration, playHeadRef, scrollLeftRef, handleScroll, tickersGroupRef, timelineContainerRef, state, dispatch, timelineLayerRef}) {
+const  TimelineUserReducer = function ({videoDuration, segments, setSegments, playHeadRef, scrollLeftRef, handleScroll, tickersGroupRef, timelineContainerRef, state, dispatch, timelineLayerRef, videoRef, seekTo, segmentCount, incrementSegmentCount}) {
     const scrollLeft = scrollLeftRef.current;
-
-    const hoverLineRef = useRef(null);
-
     const {pxPerSec, viewportWidth, timelineHeight, mode: currentMode} = state;
 
     // const [durationSeconds, setDurationSeconds] = useState(calculateTickers({scrollLeft, pxPerSec, viewportWidth}));
@@ -58,8 +56,6 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef, scrollLeftRe
 
     // used to record the start time when the mouseDown is fired.
     const activeSegmentRefStartTime = useRef(null);
-    // segments created by the user and the selected segment by the user!
-    const [segments, setSegments] = useState([]);
     const [selectedSegmentId, setSelectedSegmentId] = useState(null);
     // console.log(segments);
 
@@ -163,26 +159,40 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef, scrollLeftRe
                 return;
             }
 
-            const segmentColor = generateRandomRgbaColor(0.5);
-            const newSegment = {id: crypto.randomUUID(), startTime: startSec, endTime: sec, segmentColor, name: `Segment ${segments.length + 1}`};
-            setSegments((prevSegments) => [...prevSegments, newSegment]);
+            // Normalize segment boundaries so startTime is always <= endTime,
+            // regardless of drag direction (user may drag left or right)
+            // sec(mouseup coord/sec) -> endTime
+            const timeStart = Math.min(startSec, sec);
+            const timeEnd = Math.max(startSec, sec);
 
-            console.log(`Time Up: ${formatSecondsToHHMMSS(sec)}`);
+            // Don't allow segment creation if the end time exceeds video duration or start time exceeds video duration
+            if (timeEnd > videoDuration || timeStart > videoDuration) {
+                toast.error("Segment time cannot exceed video duration.", {duration: 3000, position: "top-center", style: {background: "rgba(255, 255, 255, 0.8)"}});
+                return;
+            }
+
+            const segmentColor = generateRandomRgbaColor(0.5);
+            incrementSegmentCount();
+            const newSegment = {id: crypto.randomUUID(), startTime: timeStart, endTime: timeEnd, segmentColor, name: `Segment ${segmentCount}`};
+            setSegments((prevSegments) => [...prevSegments, newSegment]);
         }
     }
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2 border p-2">
-                <div className="flex items-center gap-1">
-                    <IoMdCut className="bg-rose-700/30 p-1 rounded" size={20} />
-                    <h4 className="text-lg">Click and drag to create segments.</h4>
-                </div>
-                <TimelineModes currentMode={currentMode} setMode={changeMode} />
-                <div className="flex gap-3 items-center">
-                    <button onClick={handleTimelineZoom} name="decrement" className="rounded-full p-1 ring-2"><FaMinus /></button>
-                    <span className="font-mono tabular-nums w-10 text-center">{zoomPercentage}%</span>
-                    <button onClick={handleTimelineZoom} name="increment" className="rounded-full p-1 ring-2"><FaPlus /></button>
+            <div className="space-y-1">
+                <ProgressInput videoDuration={videoDuration} videoRef={videoRef} />
+                <div className="flex items-center justify-between gap-2 border p-2">
+                    <div className="flex items-center gap-1">
+                        <IoMdCut className="bg-rose-700/30 p-1 rounded" size={20} />
+                        <h4 className="text-lg">Click and drag to create segments.</h4>
+                    </div>
+                    <TimelineModes currentMode={currentMode} setMode={changeMode} />
+                    <div className="flex gap-3 items-center">
+                        <button onClick={handleTimelineZoom} name="decrement" className="rounded-full p-1 ring-2"><FaMinus /></button>
+                        <span className="font-mono tabular-nums w-10 text-center">{zoomPercentage}%</span>
+                        <button onClick={handleTimelineZoom} name="increment" className="rounded-full p-1 ring-2"><FaPlus /></button>
+                    </div>
                 </div>
             </div>
 
@@ -241,6 +251,7 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef, scrollLeftRe
                                         setSelectedSegmentId={setSelectedSegmentId}
                                         currentMode={currentMode}
                                         timelineLayerRef={timelineLayerRef}
+                                        seekTo={seekTo}
                                     />
                                 )
                             })}
@@ -257,12 +268,12 @@ const  TimelineUserReducer = function ({videoDuration, playHeadRef, scrollLeftRe
             </div>
 
             <SegmentControls
-                clearSegments={() => setSegments([])}
                 segments={segments}
                 deleteSegment={deleteSegment}
                 editSegment={editSegment}
                 selectedSegmentId={selectedSegmentId}
                 setSelectedSegmentId={setSelectedSegmentId}
+                seekTo={seekTo}
             />
 
         </div>

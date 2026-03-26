@@ -18,6 +18,14 @@ const SegmentEditForm = function ({segments, selectedSegmentId, editSegment, del
 
     const handleEditSegment = function (e) {
         e.preventDefault();
+        if (!selectedSegmentName) {
+            toast.error("Please give a name for the segment", {duration: 3000, position: "top-center"});
+            return;
+        }
+        if (selectedSegmentName.length < 4) {
+            toast.error("Segment name should be greater than '4' characters", {duration: 3000, position: "top-center"});
+            return;
+        }
         console.log("submitting form!");
         setIsEditing(false);
         editSegment({segId: selectedSegment.id, name: selectedSegmentName});

@@ -19,9 +19,11 @@ const truncate = (s, n, omission = '…') => {
 };
 
 function formatSecondsToHHMMSS(totalSeconds) {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    const rounded = Math.floor(totalSeconds); // or Math.round
+
+    const hours = Math.floor(rounded / 3600);
+    const minutes = Math.floor((rounded % 3600) / 60);
+    const seconds = rounded % 60;
 
     // Function to add a leading zero if the number is a single digit
     const pad = (num) => num.toString().padStart(2, '0');
