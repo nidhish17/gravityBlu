@@ -69,7 +69,7 @@ video's res is available ie due to init/variable being read during init phase an
 
 
 ## Dev Notes
-### ⚠️ 👽👽👽🧨🧨🧨🧨🧨🧨🧨🐦‍🔥 ALWAYS REMEMBER TO UPDATE THE "__ VERSION __" VARIABLE ELSE UPDATING notification WILL NOT be triggered in app ⚠️
+### ALWAYS REMEMBER TO UPDATE THE "__ VERSION __" VARIABLE ELSE UPDATING notification WILL NOT be triggered in app ⚠️
 - [x] implement updating feature to app
 - [ ]
 
