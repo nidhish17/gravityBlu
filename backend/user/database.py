@@ -1,7 +1,8 @@
-from peewee import CharField, SqliteDatabase, Model, BooleanField, IntegerField, ForeignKeyField, BigIntegerField
+from peewee import CharField, SqliteDatabase, Model, BooleanField, IntegerField, ForeignKeyField, BigIntegerField, DateTimeField
 import os
 from threading import Lock
 import sys
+from datetime import datetime
 
 
 if getattr(sys, "frozen", False):
@@ -27,6 +28,12 @@ class User(Model):
 
 
 class Download(Model):
+    DOWNLOAD_TYPE_CHOICES = (
+        ("video", "Video"),
+        ("audio", "Audio"),
+        ("segment", "Segment")
+    )
+
     user = ForeignKeyField(User, backref="downloads")
     title = CharField(default="video title")
     duration = CharField(null=True)
@@ -34,11 +41,21 @@ class Download(Model):
     resolution = CharField(null=True)
     thumb_link = CharField(null=True)
     size = BigIntegerField(null=True)
-    type = CharField(null=True)
+    type = CharField(null=True, choices=DOWNLOAD_TYPE_CHOICES)
+
+    created_at = DateTimeField(default=datetime.now)
 
     class Meta:
         database = db
 
+class SegmentTimestamp(Model):
+    download = ForeignKeyField(Download, backref="segments")
+    # video download start at?
+    start_timestamp = IntegerField(null=False)
+    end_timestamp = IntegerField(null=False)
+
+    class Meta:
+        database = db
 
 def init_db():
     with db:

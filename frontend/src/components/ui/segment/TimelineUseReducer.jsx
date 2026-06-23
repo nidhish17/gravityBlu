@@ -53,6 +53,8 @@ const  TimelineUserReducer = function ({videoDuration, segments, setSegments, pl
     // Dragging functionality components
     const isDragging = useRef(false);
     const pointerDown = useRef({pointerDown: false});
+    // track that the user is still on canvas when the mouseUp is triggerred to create the segments properly!
+    const mouseOnCanvas = useRef(null);
 
     // used to record the start time when the mouseDown is fired.
     const activeSegmentRefStartTime = useRef(null);
@@ -127,6 +129,7 @@ const  TimelineUserReducer = function ({videoDuration, segments, setSegments, pl
         const timelinePos = worldX / pxPerSec;
         const sec = Math.round(timelinePos);
 
+        mouseOnCanvas.current = true;
         pointerDown.current = {...pointerDown.current, pointerDown: true, pointerDownPosX: pointerX, pointerDownWorldX: worldX};
 
         activeSegmentRefStartTime.current = {startSec: sec};
@@ -150,7 +153,9 @@ const  TimelineUserReducer = function ({videoDuration, segments, setSegments, pl
         removeSelectionMarquee({selectionMarqueeRect: selectionMarqueeRect.current});
 
         // if the user is in create segments mode only then allow the user to create segments else no!
-        if (currentMode === MODE_NAMES.create) {
+        // and also ensure that the mouse is on canvas and the user didn't just leave the stage area while
+        // still clicking the left mouse and dragging!
+        if (currentMode === MODE_NAMES.create && mouseOnCanvas.current) {
             const {startSec} = activeSegmentRefStartTime.current;
             const totalSegDuration = Math.abs(sec - startSec);
 
@@ -177,6 +182,18 @@ const  TimelineUserReducer = function ({videoDuration, segments, setSegments, pl
             setSegments((prevSegments) => [...prevSegments, newSegment]);
         }
     }
+
+    const handleMouseLeave = function () {
+        // cancel the action/selection!
+        if (pointerDown.current.pointerDown) {
+            console.log("Cancel the action");
+            mouseOnCanvas.current = false;
+            isDragging.current = false;
+            pointerDown.current = {...pointerDown.current, pointerDown: false};
+            removeSelectionMarquee({selectionMarqueeRect: selectionMarqueeRect.current});
+        }
+    }
+
 
     return (
         <div className="space-y-4">
@@ -211,6 +228,7 @@ const  TimelineUserReducer = function ({videoDuration, segments, setSegments, pl
                         className={`pointer-events-auto`}
                         width={viewportWidth}
                         height={80}
+                        onMouseLeave={handleMouseLeave}
                         onMouseMove={handleMouseMove}
                         onPointerDown={handleMouseDown}
                         onPointerUp={handleMouseUp}
