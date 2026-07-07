@@ -128,7 +128,7 @@ const VideoCard = function ({
                         <div className="progress-info gap-y-1 flex flex-col">
                             <div className="flex justify-center">
                                 <div className="relative rounded-full h-2 basis-full bg-stone-700/50">
-                                    <div style={{width: progress} || "0%"}
+                                    <div style={{width: progress || "0%"}}
                                          className={`absolute rounded-full bg-indigo-600/90 inset-0`}></div>
                                 </div>
                             </div>

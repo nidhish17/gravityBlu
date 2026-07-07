@@ -94,7 +94,7 @@ const SegmentRect = function ({segment, selectedSegmentId, setSelectedSegmentId,
 }
 
 // edits the segment start and endTime based on the drag!
-const resizeSegment = function ({}) {
+const resizeSegment = function () {
 
 }
 

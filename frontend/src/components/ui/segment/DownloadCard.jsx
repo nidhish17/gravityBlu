@@ -53,7 +53,7 @@ const DownloadCard = function ({downloadInfo}) {
 }
 
 
-const OpenFileLocationButton = function ({}) {
+const OpenFileLocationButton = function () {
     return (
         <button
             // onClick={() => handleOpenFileLocation(`${downloadedDetail.saveLocation}`, videoTitle)}
