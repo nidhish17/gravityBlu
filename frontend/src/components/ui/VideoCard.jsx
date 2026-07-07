@@ -8,6 +8,8 @@ import {formatBytes} from "../../utils/utils.js";
 import {IoFolderOpen, IoMusicalNotesSharp} from "react-icons/io5";
 import toast from "react-hot-toast";
 
+import useDownloadStore from "../../hooks/useDownloadStore.js";
+
 const VideoCard = function ({
                                 thumbImgLink,
                                 downloaded,
@@ -23,6 +25,8 @@ const VideoCard = function ({
                             }) {
 
     const [loading, setLoading] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const removeDownload = useDownloadStore((state) => state.removeDownload);
 
     const handleOpenFileLocation = async function (filepath, videoTitle = "") {
         const toastId = toast.loading(`Opening ${videoTitle.length > 25 ? videoTitle.slice(0, 25 - 3) + "..." : videoTitle}`, {duration: 1200});
@@ -37,7 +41,24 @@ const VideoCard = function ({
         }
     }
 
+    const handlePause = async () => {
+        setIsPaused(true);
+        await window.pywebview.api.pause_download(downloadId);
+    };
 
+    const handleResume = async () => {
+        setIsPaused(false);
+        await window.pywebview.api.resume_download(downloadId);
+    };
+
+    const handleCancel = async () => {
+        try {
+            await window.pywebview.api.cancel_download(downloadId);
+            removeDownload(downloadId);
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     return (
         <div
@@ -148,6 +169,17 @@ const VideoCard = function ({
                                 }
 
                             </div>
+                            
+                            {!processing && (
+                                <div className="flex justify-end gap-x-2 mt-1">
+                                    {isPaused ? (
+                                        <button onClick={handleResume} className="bg-green-600/90 hover:bg-green-500/90 px-3 py-1 text-xs text-white rounded cursor-pointer transition-colors">Resume</button>
+                                    ) : (
+                                        <button onClick={handlePause} className="bg-yellow-600/90 hover:bg-yellow-500/90 px-3 py-1 text-xs text-white rounded cursor-pointer transition-colors">Pause</button>
+                                    )}
+                                    <button onClick={handleCancel} className="bg-red-600/90 hover:bg-red-500/90 px-3 py-1 text-xs text-white rounded cursor-pointer transition-colors">Cancel</button>
+                                </div>
+                            )}
                         </div>
                     )}
 

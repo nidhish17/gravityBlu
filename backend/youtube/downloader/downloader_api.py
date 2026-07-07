@@ -42,6 +42,25 @@ class YoutubeDownloader:
         video_info = self.info.get_info(url)
         return video_info
 
+    def pause_download(self, video_id: str):
+        from backend.youtube.downloader.download_state import download_states
+
+        download_states[video_id] = "paused"
+        return {"ok": True, "status": Status.SUCCESS.value, "data": {"message": f"Paused {video_id}"}}
+
+    def resume_download(self, video_id: str):
+        from backend.youtube.downloader.download_state import download_states
+
+        download_states[video_id] = "downloading"
+        return {"ok": True, "status": Status.SUCCESS.value, "data": {"message": f"Resumed {video_id}"}}
+
+    def cancel_download(self, video_id: str):
+        from backend.youtube.downloader.download_state import download_states
+
+        download_states[video_id] = "cancelled"
+        # Also clean up partial files if necessary
+        return {"ok": True, "status": Status.SUCCESS.value, "data": {"message": f"Cancelled {video_id}"}}
+
     def download_yt_video(self, url):
         # if the user has not specified the location return immediately
         if not self.save_loc.get_user_save_loc()["specified"]:

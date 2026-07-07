@@ -96,7 +96,18 @@ class VideoDownloader:
         video_id = video_details.get("video_id")
 
         def progress_hook(d):
-            # print("start of info dict progress hook", d, "info dict progress hook")
+            import time
+            from backend.youtube.downloader.download_state import download_states
+
+            while True:
+                state = download_states.get(video_id, "downloading")
+                if state == "cancelled":
+                    raise Exception("Download cancelled by user.")
+                elif state == "paused":
+                    time.sleep(1)
+                else:
+                    break
+
             if d["status"] == "downloading":
                 percent = d.get("_percent_str", "").strip()
                 speed = d.get("_speed_str", "")
@@ -112,6 +123,7 @@ class VideoDownloader:
                     "processing": False,
                     "downloadedBytes": done,
                     "totalBytes": total,
+                    "paused": False,
                 }
                 update_progress(data)
             # This one dosen't send that the video download has been completed but instead just sends that processing

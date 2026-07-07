@@ -58,7 +58,20 @@ class AudioDownloader:
 
     def progress_hook(self, update_progress: Callable, download_complete: Callable, d):
         video_id = d.get("info_dict").get("id")
-        # print(video_id)
+        audio_id = f"{video_id}audio"
+
+        import time
+        from backend.youtube.downloader.download_state import download_states
+
+        while True:
+            state = download_states.get(audio_id, "downloading")
+            if state == "cancelled":
+                raise Exception("Download cancelled by user.")
+            elif state == "paused":
+                time.sleep(1)
+            else:
+                break
+
         if d.get("status") == "downloading":
             percent = d.get("_percent_str", "").strip()
             speed = d.get("_speed_str", "")
@@ -74,6 +87,7 @@ class AudioDownloader:
                 "processing": False,
                 "downloadedBytes": done,
                 "totalBytes": total,
+                "paused": False,
             }
             update_progress(data)
         elif d.get("status") == "finished":

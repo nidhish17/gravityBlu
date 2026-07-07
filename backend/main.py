@@ -41,6 +41,15 @@ class DownloaderApi:
             }
             # return {"message": f"An error occurred: {e}", "status_code": 500}
 
+    def pause_download(self, download_id):
+        return self.yt_api.pause_download(download_id)
+
+    def resume_download(self, download_id):
+        return self.yt_api.resume_download(download_id)
+
+    def cancel_download(self, download_id):
+        return self.yt_api.cancel_download(download_id)
+
     def delete_download(self, download_id: int):
         try:
             print("Deleting: ", download_id)

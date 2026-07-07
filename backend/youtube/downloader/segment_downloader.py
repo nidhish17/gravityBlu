@@ -35,6 +35,23 @@ class SegmentDownloader:
         base_path = outtmpl.split("_%(section_start)s")[0]
         ext = ydl_opts.get("merge_output_format", "mp4")
 
+        video_id = video_info.get("videoId")
+
+        def segment_progress_hook(d):
+            import time
+            from backend.youtube.downloader.download_state import download_states
+
+            while True:
+                state = download_states.get(video_id, "downloading")
+                if state == "cancelled":
+                    raise Exception("Download cancelled by user.")
+                elif state == "paused":
+                    time.sleep(1)
+                else:
+                    break
+
+        ydl_opts["progress_hooks"] = [segment_progress_hook]
+
         with YoutubeDL(ydl_opts) as ydl:
             try:
                 ydl.download([url])

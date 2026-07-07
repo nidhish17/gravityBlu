@@ -31,6 +31,7 @@ const Downloading = function () {
                         return (
                             <VideoCard
                                 downloaded={downloaded}
+                                downloadId={id}
                                 key={`${id}${i}`}
                                 videoTitle={videoTitle}
                                 thumbImgLink={videoThumbImg}
