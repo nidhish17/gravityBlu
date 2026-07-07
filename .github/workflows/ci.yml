@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -28,7 +28,26 @@ jobs:
         run: ruff format --check .
 
       - name: Run Pytest
+        env:
+          PYTHONPATH: .
         run: |
           pip install pytest
           pip install -r requirements.txt
-          PYTHONPATH=. pytest tests/backend/
+          pytest tests/backend/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Run Frontend Linter (ESLint)
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run Frontend Tests (Vitest)
+        working-directory: ./frontend
+        run: npm run test
