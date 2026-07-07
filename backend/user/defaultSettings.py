@@ -3,7 +3,6 @@ from backend.user.database import db, User
 
 
 class DefaultSettings:
-
     def get_download_preferences(self):
         # query the database and send if askEveryTime is checked, and vcodec value and the video quality value
         try:
@@ -13,10 +12,10 @@ class DefaultSettings:
                     "data": {
                         "askEveryTime": user.ask_quality_everytime,
                         "videoQuality": user.quality,
-                        "audioQuality": user.audio_quality
+                        "audioQuality": user.audio_quality,
                     },
                     "ok": True,
-                    "status": Status.SUCCESS.value
+                    "status": Status.SUCCESS.value,
                 }
 
         except Exception as err:
@@ -24,7 +23,7 @@ class DefaultSettings:
                 "ok": False,
                 "status": Status.ERROR.value,
                 "details": str(err),
-                "error": "Failed to fetch preferences"
+                "error": "Failed to fetch preferences",
             }
 
     def update_ask_everytime(self, data):
@@ -36,9 +35,7 @@ class DefaultSettings:
                 return {
                     "ok": True,
                     "status": Status.SUCCESS.value,
-                    "data": {
-                        "askQualityEverytime": user.ask_quality_everytime
-                    }
+                    "data": {"askQualityEverytime": user.ask_quality_everytime},
                 }
         except Exception as err:
             print(err)
@@ -48,7 +45,7 @@ class DefaultSettings:
                 "data": {
                     "error": "Failed to update",
                     "details": str(err),
-                }
+                },
             }
 
     def update_settings(self, data):
@@ -70,7 +67,7 @@ class DefaultSettings:
                     user.quality = 2160
                 elif specified_quality == "8k":
                     user.quality = 4320
-                    
+
                 if specified_audio_quality:
                     try:
                         user.audio_quality = int(specified_audio_quality)
@@ -82,10 +79,7 @@ class DefaultSettings:
                 return {
                     "ok": True,
                     "status": Status.SUCCESS.value,
-                    "data": {
-                        "videoQuality": user.quality,
-                        "audioQuality": user.audio_quality
-                    }
+                    "data": {"videoQuality": user.quality, "audioQuality": user.audio_quality},
                 }
         except Exception as err:
             print(err)
@@ -95,7 +89,5 @@ class DefaultSettings:
                 "data": {
                     "error": "Failed to update",
                     "details": str(err),
-                }
+                },
             }
-
-

@@ -1,5 +1,6 @@
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import webview
@@ -8,29 +9,32 @@ from backend.main import DownloaderApi
 
 
 ### -------------------------------------use google dns------------------------------------- ###
-import socket, dns.resolver              # pip install dnspython
+import socket
+import dns.resolver  # pip install dnspython
+
 # one resolver, hard-wired to Google DNS
 _res = dns.resolver.Resolver(configure=False)
-_res.nameservers = ['8.8.8.8']           # 1.1.1.1 also fine
+_res.nameservers = ["8.8.8.8"]  # 1.1.1.1 also fine
 
-_orig = socket.getaddrinfo               # for fallback
+_orig = socket.getaddrinfo  # for fallback
+
 
 def fast_dns(host, port, family=0, type=0, proto=0, flags=0):
-    try:                                 # ask Google DNS
-        ip = _res.resolve(host, 'A', lifetime=2)[0].to_text()
-        return [(socket.AF_INET, socket.SOCK_STREAM,
-                 proto, '', (ip, port))]
-    except Exception:                    # on failure, use OS resolver
+    try:  # ask Google DNS
+        ip = _res.resolve(host, "A", lifetime=2)[0].to_text()
+        return [(socket.AF_INET, socket.SOCK_STREAM, proto, "", (ip, port))]
+    except Exception:  # on failure, use OS resolver
         return _orig(host, port, family, type, proto, flags)
 
-socket.getaddrinfo = fast_dns            # ←  installs the patch
+
+socket.getaddrinfo = fast_dns  # ←  installs the patch
 ### ----------------------------------------------------------------------------------------- ###
 
 
 def app():
     api = DownloaderApi()
 
-    app_window = webview.create_window(
+    webview.create_window(
         title=APP_NAME,
         url="http://localhost:5173/",
         height=APP_HEIGHT,
@@ -43,11 +47,13 @@ def app():
     webview.start(debug=True)
     # print("window set successfully")
 
+
 # def on_closing():
 #     return askyesno(
 #         message="Downloads are still in progress. If you close now, incomplete video fragments may be left behind.\n\nAre you sure you want to exit?",
 #         title="videos downloading",
-#)
+# )
+
 
 def check_ytdlp_ver():
     import requests

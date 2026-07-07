@@ -1,4 +1,4 @@
-from ..ytdlp_config import general_video_ydlopts, DEBUG_OPTS
+from ..ytdlp_config import general_video_ydlopts
 from backend.user.database import get_user
 from yt_dlp.utils import download_range_func
 from ...utils.utils import get_ffmpeg_dir
@@ -9,27 +9,30 @@ class SegmentDownloaderInfo:
         pass
 
     # yt-dlp options for segment downloader
-    def ydl_opts(self, video_info: dict, segments: list[dict[str, str|int|float]]) -> dict:
-        user = get_user(); user_video_quality = user.quality
+    def ydl_opts(self, video_info: dict, segments: list[dict[str, str | int | float]]) -> dict:
+        user = get_user()
+        user_video_quality = user.quality
         max_res_obj = video_info.get("max_res")
         vcodec = self.__get_vcodec(max_res_obj, user_video_quality)
         is_short = video_info.get("height") > video_info.get("width")
 
-
-        segment_ydl_opts = general_video_ydlopts(video_info, {
-            "format": (
-                f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={user_video_quality}]+bestaudio[ext=m4a]"
-                f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]+bestaudio[ext=m4a]"
-                f"/best[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]"
-                f"/best[ext=mp4]"
-            ),
-            "download_ranges": download_range_func(None, segments),
-            "ffmpeg_location": get_ffmpeg_dir(),
-            "force_keyframes_at_cuts": True,
-        }, True)
+        segment_ydl_opts = general_video_ydlopts(
+            video_info,
+            {
+                "format": (
+                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={user_video_quality}]+bestaudio[ext=m4a]"
+                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]+bestaudio[ext=m4a]"
+                    f"/best[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]"
+                    f"/best[ext=mp4]"
+                ),
+                "download_ranges": download_range_func(None, segments),
+                "ffmpeg_location": get_ffmpeg_dir(),
+                "force_keyframes_at_cuts": True,
+            },
+            True,
+        )
 
         return segment_ydl_opts
-
 
     @staticmethod
     def __get_vcodec(max_res_obj, quality) -> str:
@@ -47,5 +50,3 @@ class SegmentDownloaderInfo:
             vcodec = "avc"
 
         return vcodec
-
-

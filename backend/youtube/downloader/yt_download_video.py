@@ -55,7 +55,9 @@ class VideoDownloader:
         else:
             vcodec = "avc"
 
-        ydl_opts = self.generate_ydl_ops(video_is_short, vcodec, filename, user_preferred_quality, user_preferred_save_loc)
+        ydl_opts = self.generate_ydl_ops(
+            video_is_short, vcodec, filename, user_preferred_quality, user_preferred_save_loc
+        )
 
         return {
             "video_id": video_id,
@@ -63,7 +65,7 @@ class VideoDownloader:
             "vcodec": vcodec,
             "user": user,
             "filename": filename,
-            "user_preferred_save_loc": user_preferred_save_loc
+            "user_preferred_save_loc": user_preferred_save_loc,
         }
 
     def save_data_to_db(self, downloaded_info):
@@ -72,7 +74,7 @@ class VideoDownloader:
         thumbnail = downloaded_info.get("thumbnail")
         duration = downloaded_info.get("duration_string")
         resolution = downloaded_info.get("resolution")
-        video_id = downloaded_info.get("videoId")
+        downloaded_info.get("videoId")
         filesize = downloaded_info.get("filesize")
         save_loc = downloaded_info.get("filepath")
 
@@ -83,11 +85,12 @@ class VideoDownloader:
             duration=duration,
             save_loc=save_loc,
             resolution=resolution,
-            d_type="video"
+            d_type="video",
         )
 
-    def download_video(self, url, video_info, update_progress: Callable | None = None,
-                       download_complete: Callable | None = None):
+    def download_video(
+        self, url, video_info, update_progress: Callable | None = None, download_complete: Callable | None = None
+    ):
 
         video_details = self.get_video_details(video_info)
         video_id = video_details.get("video_id")
@@ -100,9 +103,16 @@ class VideoDownloader:
                 eta = d.get("_eta_str", "")
                 done = d.get("downloaded_bytes", 0)
                 total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
-                data = {"id": video_id, "progressPercent": f"{percent}", "eta": f"{eta}", "speed": f"{speed}",
-                        "downloaded": False,
-                        "processing": False, "downloadedBytes": done, "totalBytes": total}
+                data = {
+                    "id": video_id,
+                    "progressPercent": f"{percent}",
+                    "eta": f"{eta}",
+                    "speed": f"{speed}",
+                    "downloaded": False,
+                    "processing": False,
+                    "downloadedBytes": done,
+                    "totalBytes": total,
+                }
                 update_progress(data)
             # This one dosen't send that the video download has been completed but instead just sends that processing
             # has started and the download_complete status is actually sent by the postprocessor hook which is more reliable
@@ -125,7 +135,7 @@ class VideoDownloader:
             try:
                 downloaded_info = ydl.extract_info(url, download=True)
                 save_loc = os.path.join(save_location, filename)
-                
+
                 # Retrieve final details for database
                 final_filesize = downloaded_info.get("filesize") or downloaded_info.get("filesize_approx", 0)
                 final_filepath = downloaded_info.get("filepath", save_loc)
@@ -136,14 +146,16 @@ class VideoDownloader:
                     "title": downloaded_info.get("title", ""),
                     "thumbnail": downloaded_info.get("thumbnail", ""),
                     "duration_string": downloaded_info.get("duration_string", ""),
-                    "resolution": downloaded_info.get("resolution", "")
+                    "resolution": downloaded_info.get("resolution", ""),
                 }
-                
+
                 print("\033[1m FINISHED MERGING \033[0m")
                 self.save_data_to_db(db_data)
                 if self.frontend_comms:
-                    self.frontend_comms.send_download_complete({"id": video_id, "downloaded": True, "processing": False})
-                    
+                    self.frontend_comms.send_download_complete(
+                        {"id": video_id, "downloaded": True, "processing": False}
+                    )
+
             except DownloadError as e:
                 error_msg = str(e).lower()
                 if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
@@ -154,7 +166,7 @@ class VideoDownloader:
                     raise e
 
     def generate_ydl_ops(self, is_short, vcodec, filename, video_quality, save_location):
-        '''
+        """
         generates ydl_options for downloading video
         :param save_location:
         :param is_short: is required to get proper videoquality
@@ -163,22 +175,23 @@ class VideoDownloader:
         :param video_quality:
 
         :return: returns generated ydl_options for downloading the video
-        '''
-        ydl_opts = get_opts({
-            # "external_downloader": str(ARIA2C_PATH),
-            # "external_downloader_args": ['-x', '16', '-k', '1M'],  # 16 connections, 1MB chunks
-            "format": (
-                f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
-                f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
-                f"/best[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]"
-                f"/best[ext=mp4]"
-            ),
-            "ffmpeg_location": self.ffmpeg_path,
-            "outtmpl": f"{save_location}/{filename}",
-            "updatetime": False,
-            "merge_output_format": "mp4",
-            # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
-        })
+        """
+        ydl_opts = get_opts(
+            {
+                # "external_downloader": str(ARIA2C_PATH),
+                # "external_downloader_args": ['-x', '16', '-k', '1M'],  # 16 connections, 1MB chunks
+                "format": (
+                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
+                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
+                    f"/best[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]"
+                    f"/best[ext=mp4]"
+                ),
+                "ffmpeg_location": self.ffmpeg_path,
+                "outtmpl": f"{save_location}/{filename}",
+                "updatetime": False,
+                "merge_output_format": "mp4",
+                # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
+            }
+        )
 
         return ydl_opts
-

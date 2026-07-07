@@ -1,24 +1,25 @@
 ### -------------------------------------use google dns------------------------------------- ###
 import os.path
-import socket, dns.resolver              # pip install dnspython
-
+import socket
+import dns.resolver  # pip install dnspython
 
 
 # one resolver, hard-wired to Google DNS
 _res = dns.resolver.Resolver(configure=False)
-_res.nameservers = ['8.8.8.8']           # 1.1.1.1 also fine
+_res.nameservers = ["8.8.8.8"]  # 1.1.1.1 also fine
 
-_orig = socket.getaddrinfo               # for fallback
+_orig = socket.getaddrinfo  # for fallback
+
 
 def fast_dns(host, port, family=0, type=0, proto=0, flags=0):
-    try:                                 # ask Google DNS
-        ip = _res.resolve(host, 'A', lifetime=2)[0].to_text()
-        return [(socket.AF_INET, socket.SOCK_STREAM,
-                 proto, '', (ip, port))]
-    except Exception:                    # on failure, use OS resolver
+    try:  # ask Google DNS
+        ip = _res.resolve(host, "A", lifetime=2)[0].to_text()
+        return [(socket.AF_INET, socket.SOCK_STREAM, proto, "", (ip, port))]
+    except Exception:  # on failure, use OS resolver
         return _orig(host, port, family, type, proto, flags)
 
-socket.getaddrinfo = fast_dns            # ←  installs the patch
+
+socket.getaddrinfo = fast_dns  # ←  installs the patch
 ### ----------------------------------------------------------------------------------------- ###
 
 import webview
@@ -45,6 +46,7 @@ if last_error == 183:
 
 # ------------------------------------ prevent user from opening multiple instances of my app ------------------------------------ #
 
+
 def app():
     api = DownloaderApi()
     base_dir = os.path.abspath("frontend_production")
@@ -54,7 +56,7 @@ def app():
         frontend_index_file_path = os.path.join(base_dir, "index.html")
 
     print(frontend_index_file_path)
-    app_window = webview.create_window(
+    webview.create_window(
         title=APP_NAME,
         url=f"file://{frontend_index_file_path}",
         height=APP_HEIGHT,
@@ -66,7 +68,6 @@ def app():
 
     webview.start()
 
+
 if __name__ == "__main__":
     app()
-
-

@@ -1,11 +1,10 @@
-from tkinter.filedialog import askdirectory
 from backend.user.database import User, db
 from backend.status import Status
 from webview import windows
 import webview
 
-class SaveLocation:
 
+class SaveLocation:
     def get_user_save_loc(self):
         try:
             db.connect(reuse_if_open=True)
@@ -19,13 +18,13 @@ class SaveLocation:
                     "ok": True,
                     "specifiedLocation": specified_location,
                     "specified": False,
-                    "status": Status.SUCCESS.value
+                    "status": Status.SUCCESS.value,
                 }
             else:
                 return {
                     "specifiedLocation": specified_location,
                     "specified": location_specified,
-                    "status": Status.SUCCESS.value
+                    "status": Status.SUCCESS.value,
                 }
 
         except Exception as err:
@@ -34,9 +33,8 @@ class SaveLocation:
                 "ok": False,
                 "error": "Failed to fetch save location",
                 "details": str(err),
-                "status": Status.ERROR.value
+                "status": Status.ERROR.value,
             }
-
 
     def specify_location(self):
         try:
@@ -47,25 +45,17 @@ class SaveLocation:
                 folder = location[0]
                 print(folder)
                 self._save_location_to_db(specified_location=folder)
-                return {
-                    "status": Status.SUCCESS.value,
-                    "specifiedLocation": folder,
-                    "specified": True
-                }
+                return {"status": Status.SUCCESS.value, "specifiedLocation": folder, "specified": True}
             else:
                 location_specified = self.user_specified_loc()
                 return {
                     "status": Status.CANCELLED.value,
                     "specified": False,
                     "specifiedLocation": None,
-                    "error": "Change location not specified" if location_specified else "Specify Location"
+                    "error": "Change location not specified" if location_specified else "Specify Location",
                 }
         except Exception as err:
-            return {
-                "status": Status.ERROR.value,
-                "error": err
-            }
-
+            return {"status": Status.ERROR.value, "error": err}
 
     def _save_location_to_db(self, specified_location):
         with db:
@@ -73,12 +63,11 @@ class SaveLocation:
             user.user_save_location = specified_location
             user.save()
 
-
     def user_specified_loc(self):
-        '''
+        """
         returns if the user has specified location or not
         :return:
-        '''
+        """
         with db:
             user = User.get(id=1)
             return bool(user.user_save_location)

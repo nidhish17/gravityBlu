@@ -10,6 +10,7 @@ import os
 import sys
 import pyperclip
 
+
 class DownloaderApi:
     def __init__(self):
         init_db()
@@ -23,23 +24,14 @@ class DownloaderApi:
         try:
             # only works for windows for now
             if sys.platform == "win32":
-                subprocess.Popen(f'explorer /select, {os.path.realpath(location)}')
+                subprocess.Popen(f"explorer /select, {os.path.realpath(location)}")
             # return {"message": "Opening...", "status_code": 200}
-            return {
-                "ok": True,
-                "status": Status.SUCCESS.value,
-                "data": {
-                    "message": "opening file location"
-                }
-            }
+            return {"ok": True, "status": Status.SUCCESS.value, "data": {"message": "opening file location"}}
         except Exception as err:
             return {
                 "ok": False,
                 "status": Status.ERROR.value,
-                "data": {
-                    "message": "failed opening file location",
-                    "error": str(err)
-                }
+                "data": {"message": "failed opening file location", "error": str(err)},
             }
             # return {"message": f"An error occurred: {e}", "status_code": 500}
 
@@ -48,26 +40,12 @@ class DownloaderApi:
             print("Deleting: ", download_id)
             data = delete_download(download_id)
             print(data)
-            return {
-                "ok": True,
-                "status": Status.SUCCESS.value,
-                "data": data
-            }
+            return {"ok": True, "status": Status.SUCCESS.value, "data": data}
         except Exception as e:
-            return {
-                "ok": False,
-                "status": Status.ERROR.value,
-                "data": str(e)
-            }
+            return {"ok": False, "status": Status.ERROR.value, "data": str(e)}
 
     def get_clipboard_text(self):
         return pyperclip.paste()
 
     def about(self):
-        return {
-            "developer": "Nico An",
-            "license": "GNU",
-            "app_name": "gravityBlu",
-            "version": "2.0.1"
-        }
-
+        return {"developer": "Nico An", "license": "GNU", "app_name": "gravityBlu", "version": "2.0.1"}

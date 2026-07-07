@@ -9,11 +9,14 @@ from backend.utils.utils import generate_filename, FFMPEG_PATH
 
 from backend.youtube.ytdlp_config import get_opts
 
+
 class AudioDownloader:
     def __init__(self):
         self.ffmpeg_path = FFMPEG_PATH
 
-    def download_audio(self, url, video_title, update_progress: Callable | None = None, download_complete: Callable | None = None):
+    def download_audio(
+        self, url, video_title, update_progress: Callable | None = None, download_complete: Callable | None = None
+    ):
         filename = generate_filename(video_title)
         user = get_user()
         save_location = user.user_save_location
@@ -23,7 +26,6 @@ class AudioDownloader:
         if update_progress:
             update_progress_handler = partial(self.progress_hook, update_progress, download_complete)
             ydl_opts["progress_hooks"] = [update_progress_handler]
-
 
         with YoutubeDL(ydl_opts) as ydl:
             try:
@@ -63,27 +65,34 @@ class AudioDownloader:
             eta = d.get("_eta_str", "")
             done = d.get("downloaded_bytes", 0)
             total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
-            data = {"id": f"{video_id}audio", "progressPercent": str(percent), "eta": str(eta), "speed": str(speed), "downloaded": False,
-                    "processing": False, "downloadedBytes": done, "totalBytes": total}
+            data = {
+                "id": f"{video_id}audio",
+                "progressPercent": str(percent),
+                "eta": str(eta),
+                "speed": str(speed),
+                "downloaded": False,
+                "processing": False,
+                "downloadedBytes": done,
+                "totalBytes": total,
+            }
             update_progress(data)
         elif d.get("status") == "finished":
             data = {"id": f"{video_id}audio", "downloaded": False, "processing": True}
             download_complete(data)
 
-
     def generate_ydl_opts(self, filename, save_location, audio_quality="192"):
 
-        ydl_opts = get_opts({
-            "outtmpl": os.path.join(save_location, filename),
-            "format": "bestaudio[ext=m4a]/best",
-            "ffmpeg_location": self.ffmpeg_path,
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": audio_quality
-            }],
-            "merge_output_format": "mp3",
-        })
+        ydl_opts = get_opts(
+            {
+                "outtmpl": os.path.join(save_location, filename),
+                "format": "bestaudio[ext=m4a]/best",
+                "ffmpeg_location": self.ffmpeg_path,
+                "postprocessors": [
+                    {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": audio_quality}
+                ],
+                "merge_output_format": "mp3",
+            }
+        )
 
         return ydl_opts
 
