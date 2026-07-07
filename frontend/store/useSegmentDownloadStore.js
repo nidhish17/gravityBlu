@@ -1,6 +1,6 @@
 import {create} from "zustand";
 
-const useSegmentDownloadStore = create((set) => ({
+const useSegmentDownloadStore = create((set, get) => ({
     downloads :[],
     addDownload: (download) => set((state) => ({downloads: [...state.downloads, download]})),
     removeDownload: (id) => set((state) => ({downloads: state.downloads.filter((d) => d.id !== id)})),
@@ -15,7 +15,7 @@ const useSegmentDownloadStore = create((set) => ({
             downloads: downloaded ? updated.filter((d) => d.id !== id) : updated
         }
     }),
-    getTotalDownloads: () => set((state) => state.downloads.length),
+    getTotalDownloads: () => get().downloads.length,
 }));
 
 export default useSegmentDownloadStore;

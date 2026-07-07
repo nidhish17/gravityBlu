@@ -1,7 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import webview
-from utils.utils import APP_NAME
-from backend.utils.utils import APP_WIDTH, APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT
-from main import DownloaderApi
+from backend.utils.utils import APP_NAME, APP_WIDTH, APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT
+from backend.main import DownloaderApi
 
 
 ### -------------------------------------use google dns------------------------------------- ###

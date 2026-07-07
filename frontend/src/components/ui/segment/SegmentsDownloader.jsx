@@ -7,11 +7,12 @@ const SegmentsDownloader = function ({segments, clearSegments, videoUrl}) {
     const addDownload = useSegmentDownloadStore((state) => state.addDownload);
 
     const [loading, setLoading] = useState(false);
+    const [mergeSegments, setMergeSegments] = useState(true);
 
     const downloadSegments = async function () {
         try {
             setLoading(true);
-            const {status_code: statusCode, message, ok, videoInformation: vidInfo} = await window.pywebview.api.yt_api.download_segments({"url": videoUrl, "segments": segments});
+            const {status_code: statusCode, message, ok, videoInformation: vidInfo} = await window.pywebview.api.yt_api.download_segments({"url": videoUrl, "segments": segments, "merge_segments": mergeSegments});
             console.log(vidInfo, "videoInformation!");
             const {videoTitle, videoId, videoDuration, thumbnail: videoThumb, durationSeconds} = vidInfo;
             console.log("Adding video id", videoId, "to segment download store");
@@ -43,24 +44,40 @@ const SegmentsDownloader = function ({segments, clearSegments, videoUrl}) {
     if (!segments.length) return <p className="font-semibold text-lg">Start creating some segments!</p>
 
     return (
-        <div className="flex justify-between items-center">
-            <button onClick={downloadSegments} disabled={loading} className="bg-lime-600 hover:bg-lime-600/80 ring-2 self-start
-                ring-offset-4 ring-offset-gray-800 ring-lime-500 hover:ring-offset-0 transition-all cursor-pointer
-                duration-200 font-semibold px-4 py-2 rounded flex gap-x-1 items-center justify-center
-                disabled:animate-pulse disabled:bg-stone-500/80 disabled:pointer-events-none disabled:cursor-default
-                disabled:ring-stone-500/80 disabled:transition-none">
-                <MdOutlineFileDownload size={25}/>
-                Download {segments.length} Segment{segments.length > 1 ? "s" : ""}
-            </button>
+        <div className="flex flex-col gap-y-3">
+            {segments.length > 1 && (
+                <div className="flex items-center gap-x-2 self-start bg-neutral-800 px-3 py-1.5 rounded-md border border-neutral-700">
+                    <input 
+                        type="checkbox" 
+                        id="mergeSegments" 
+                        checked={mergeSegments} 
+                        onChange={(e) => setMergeSegments(e.target.checked)}
+                        className="cursor-pointer h-4 w-4 text-lime-600 bg-neutral-900 border-neutral-600 rounded focus:ring-lime-500 focus:ring-2"
+                    />
+                    <label htmlFor="mergeSegments" className="text-sm font-semibold cursor-pointer text-gray-200">
+                        Merge segments into a single video
+                    </label>
+                </div>
+            )}
+            
+            <div className="flex justify-between items-center">
+                <button onClick={downloadSegments} disabled={loading} className="bg-lime-600 hover:bg-lime-600/80 ring-2 self-start
+                    ring-offset-4 ring-offset-gray-800 ring-lime-500 hover:ring-offset-0 transition-all cursor-pointer
+                    duration-200 font-semibold px-4 py-2 rounded flex gap-x-1 items-center justify-center
+                    disabled:animate-pulse disabled:bg-stone-500/80 disabled:pointer-events-none disabled:cursor-default
+                    disabled:ring-stone-500/80 disabled:transition-none">
+                    <MdOutlineFileDownload size={25}/>
+                    Download {segments.length} Segment{segments.length > 1 ? "s" : ""}
+                </button>
 
-            <button
-                onClick={clearSegments}
-                className="px-4 py-3 rounded-md hover:bg-white/80 text-black transition-all duration-200 bg-white
-                         cursor-pointer font-semibold ring-offset-4 ring-offset-neutral-900 ring-white hover:ring-offset-0">
-                Clear Segments
-            </button>
+                <button
+                    onClick={clearSegments}
+                    className="px-4 py-3 rounded-md hover:bg-white/80 text-black transition-all duration-200 bg-white
+                             cursor-pointer font-semibold ring-offset-4 ring-offset-neutral-900 ring-white hover:ring-offset-0">
+                    Clear Segments
+                </button>
+            </div>
         </div>
-
     );
 }
 

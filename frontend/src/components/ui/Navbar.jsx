@@ -64,8 +64,12 @@ const Navbar = function ({page, setPage}) {
     );
 }
 
+import useSegmentDownloadStore from "../../../store/useSegmentDownloadStore.js";
+
 const CurrentlyDownloading = function ({setPage, page}) {
-    const totalVideosDownloading = useDownloadStore((state) => state.getTotalDownloading())
+    const normalDownloads = useDownloadStore((state) => state.getTotalDownloading())
+    const segmentDownloads = useSegmentDownloadStore((state) => state.getTotalDownloads())
+    const totalVideosDownloading = normalDownloads + segmentDownloads;
     return (
         <button onClick={() => setPage("downloading")}
                 className={`relative cursor-pointer bg-neutral-600 hover:bg-neutral-700 p-1 rounded 

@@ -125,36 +125,33 @@ class VideoDownloader:
             try:
                 downloaded_info = ydl.extract_info(url, download=True)
                 save_loc = os.path.join(save_location, filename)
+                
+                # Retrieve final details for database
+                final_filesize = downloaded_info.get("filesize") or downloaded_info.get("filesize_approx", 0)
+                final_filepath = downloaded_info.get("filepath", save_loc)
+                db_data = {
+                    "videoId": video_id,
+                    "filepath": final_filepath,
+                    "filesize": final_filesize,
+                    "title": downloaded_info.get("title", ""),
+                    "thumbnail": downloaded_info.get("thumbnail", ""),
+                    "duration_string": downloaded_info.get("duration_string", ""),
+                    "resolution": downloaded_info.get("resolution", "")
+                }
+                
+                print("\033[1m FINISHED MERGING \033[0m")
+                self.save_data_to_db(db_data)
+                if self.frontend_comms:
+                    self.frontend_comms.send_download_complete({"id": video_id, "downloaded": True, "processing": False})
+                    
             except DownloadError as e:
                 error_msg = str(e).lower()
                 if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
                     print("Age restricted video")
                     raise Exception("Age-Restricted video cannot be downloaded!")
-
-    def post_processor(self, d):
-        # print(d)
-        status = d.get("status")
-        ppname = (d.get("postprocessor") or "").lower()
-        info_dict = d.get("info_dict")
-
-        video_id = info_dict.get("id")
-        filepath = info_dict.get("filepath")
-        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
-        title = info_dict.get("title")
-        thumbnail = info_dict.get("thumbnail")
-        duration = info_dict.get("duration_string")
-        resolution = info_dict.get("resolution")
-
-
-        if status == "finished" and ("movefiles" in ppname):
-            print("\033[1m FINISHED MERGING \033[0m")
-            # call the save to database and also send the data to frontend!
-            db_data = {"videoId": video_id, "filepath": filepath, "filesize": filesize, "title": title, "thumbnail": thumbnail, "duration_string": duration, "resolution": resolution}
-            frontend_data = {"id": video_id, "downloaded": True, "processing": False}
-            self.save_data_to_db(db_data)
-            self.frontend_comms.send_download_complete(frontend_data)
-            print(f"\033[93m {frontend_data} \033[0m")
-
+                else:
+                    # Re-raise the exception so downloader_api.py can catch it and send the error to the UI
+                    raise e
 
     def generate_ydl_ops(self, is_short, vcodec, filename, video_quality, save_location):
         '''
@@ -181,7 +178,6 @@ class VideoDownloader:
             "updatetime": False,
             "merge_output_format": "mp4",
             # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
-            "postprocessor_hooks": [self.post_processor],
         })
 
         return ydl_opts

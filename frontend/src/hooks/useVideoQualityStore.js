@@ -9,6 +9,9 @@ const useVideoQualityStore = create(setState => ({
 
     defaultVideoQuality: "1080p",
     setDefaultVideoQuality: (quality) => setState({defaultVideoQuality: quality}),
+
+    defaultAudioQuality: "192",
+    setDefaultAudioQuality: (quality) => setState({defaultAudioQuality: quality}),
 }));
 
 

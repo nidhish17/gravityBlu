@@ -26,37 +26,9 @@ class SegmentDownloaderInfo:
             "download_ranges": download_range_func(None, segments),
             "ffmpeg_location": get_ffmpeg_dir(),
             "force_keyframes_at_cuts": True,
-            "postprocessor_hooks": [self.post_processor],
         }, True)
 
         return segment_ydl_opts
-
-
-    def post_processor(self, d):
-        # print(f"\033[93m Fired! \033[0m")
-        print(f"\033[93m {d} \033[0m")
-
-        status = d.get("status")
-        ppname = (d.get("postprocessor") or "").lower()
-        info_dict = d.get("info_dict")
-
-        video_id = info_dict.get("id")
-        filepath = info_dict.get("filepath")
-        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
-        title = info_dict.get("title")
-        thumbnail = info_dict.get("thumbnail")
-        duration = info_dict.get("duration_string")
-        resolution = info_dict.get("resolution")
-
-
-        if status == "finished" and ("movefiles" in ppname):
-            print("\033[1m FINISHED MERGING \033[0m")
-            # call the save to database and also send the data to frontend!
-            db_data = {"videoId": video_id, "filepath": filepath, "filesize": filesize, "title": title, "thumbnail": thumbnail, "duration_string": duration, "resolution": resolution}
-            frontend_data = {"id": video_id, "downloaded": True, "processing": False}
-            # self.save_data_to_db(db_data)
-            # self.comms.send_segment_download_complete(frontend_data)
-            print(f"\033[93m {frontend_data} \033[0m")
 
 
     @staticmethod

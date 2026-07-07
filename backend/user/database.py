@@ -22,6 +22,7 @@ class User(Model):
     user_save_location = CharField(null=True)
     ask_quality_everytime = BooleanField(default=False)
     quality = IntegerField(null=True, default=1080)
+    audio_quality = IntegerField(null=True, default=192)
 
     class Meta:
         database = db
@@ -59,7 +60,12 @@ class SegmentTimestamp(Model):
 
 def init_db():
     with db:
-        db.create_tables([User, Download], safe=True)
+        db.create_tables([User, Download, SegmentTimestamp], safe=True)
+        try:
+            db.execute_sql("ALTER TABLE user ADD COLUMN audio_quality INTEGER DEFAULT 192")
+        except Exception:
+            pass  # Column likely already exists
+            
         User.get_or_create(id=1)
 
 

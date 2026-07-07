@@ -11,7 +11,7 @@ const SegmentControls = function ({segments, deleteSegment, selectedSegmentId, s
 
             {/**/}
             {segments && (
-                <div className={`fle flex-wrap gap-5 justify-between *:gro grid grid-cols-3 items-center auto-cols-min`}>
+                <div className="flex flex-wrap gap-5 items-center">
                     {segments.map((segment) => <SegmentInfoBox
                         key={segment.id}
                         segment={segment}

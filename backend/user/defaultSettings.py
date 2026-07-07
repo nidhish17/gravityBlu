@@ -12,7 +12,8 @@ class DefaultSettings:
                 return {
                     "data": {
                         "askEveryTime": user.ask_quality_everytime,
-                        "videoQuality": user.quality
+                        "videoQuality": user.quality,
+                        "audioQuality": user.audio_quality
                     },
                     "ok": True,
                     "status": Status.SUCCESS.value
@@ -31,7 +32,7 @@ class DefaultSettings:
             with db:
                 user = User.get(id=1)
                 user.ask_quality_everytime = data["askQualityEverytime"]
-                # user.save()
+                user.save()
                 return {
                     "ok": True,
                     "status": Status.SUCCESS.value,
@@ -56,7 +57,8 @@ class DefaultSettings:
         try:
             with db:
                 user = User.get(id=1)
-                specified_quality = data["defaultVideoQuality"]
+                specified_quality = data.get("defaultVideoQuality")
+                specified_audio_quality = data.get("defaultAudioQuality")
 
                 if specified_quality == "720p":
                     user.quality = 720
@@ -68,24 +70,21 @@ class DefaultSettings:
                     user.quality = 2160
                 elif specified_quality == "8k":
                     user.quality = 4320
+                    
+                if specified_audio_quality:
+                    try:
+                        user.audio_quality = int(specified_audio_quality)
+                    except ValueError:
+                        pass
 
-                if specified_quality:
-                    user.save()
-                else:
-                    return {
-                        "ok": False,
-                        "status": Status.ERROR.value,
-                        "data": {
-                            "error": "options not specified",
-                            "details": "options not specified",
-                        }
-                    }
+                user.save()
 
                 return {
                     "ok": True,
                     "status": Status.SUCCESS.value,
                     "data": {
-                        "videoQuality": user.quality
+                        "videoQuality": user.quality,
+                        "audioQuality": user.audio_quality
                     }
                 }
         except Exception as err:

@@ -17,7 +17,8 @@ class AudioDownloader:
         filename = generate_filename(video_title)
         user = get_user()
         save_location = user.user_save_location
-        ydl_opts = self.generate_ydl_opts(filename, save_location)
+        audio_quality = str(user.audio_quality) if user.audio_quality else "192"
+        ydl_opts = self.generate_ydl_opts(filename, save_location, audio_quality)
 
         if update_progress:
             update_progress_handler = partial(self.progress_hook, update_progress, download_complete)
@@ -25,7 +26,10 @@ class AudioDownloader:
 
 
         with YoutubeDL(ydl_opts) as ydl:
-            downloaded_info = ydl.extract_info(url, download=True)
+            try:
+                downloaded_info = ydl.extract_info(url, download=True)
+            except Exception as e:
+                raise e
             # save the download to the database
             save_loc = os.path.join(save_location, f"{filename}.mp3")
             filesize = downloaded_info.get("filesize_approx", "")
@@ -67,7 +71,7 @@ class AudioDownloader:
             download_complete(data)
 
 
-    def generate_ydl_opts(self, filename, save_location):
+    def generate_ydl_opts(self, filename, save_location, audio_quality="192"):
 
         ydl_opts = get_opts({
             "outtmpl": os.path.join(save_location, filename),
@@ -76,7 +80,7 @@ class AudioDownloader:
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
-                "preferredquality": "192"
+                "preferredquality": audio_quality
             }],
             "merge_output_format": "mp3",
         })

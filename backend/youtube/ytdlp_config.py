@@ -52,7 +52,7 @@ def general_video_ydlopts(video_info, extra_args=None, downloading_segments=Fals
 
     ydl_opts = get_opts({
         "ffmpeg_location": ffmpeg_path,
-        "outtmpl": f"{save_location}/{filename}_%(section_start)s-%(section_end)s" if downloading_segments else f"{save_location}/{filename}",
+        "outtmpl": f"{save_location}/{filename}_%(section_start)s-%(section_end)s.%(ext)s" if downloading_segments else f"{save_location}/{filename}",
         "updatetime": False,
         "merge_output_format": "mp4",
     })
