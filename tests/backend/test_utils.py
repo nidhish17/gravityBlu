@@ -1,4 +1,3 @@
-import pytest
 from backend.utils.utils import sanitize_title, generate_filename
 
 def test_sanitize_title():

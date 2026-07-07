@@ -34,8 +34,8 @@ def main():
     print("STEP 2: Compiling Backend (PyInstaller)")
     print("="*50)
     
-    # Ensure pyinstaller is installed
-    run_command("pip install pyinstaller")
+    # Ensure pyinstaller is installed in the active environment (e.g. .venv)
+    run_command(f'"{sys.executable}" -m pip install pyinstaller')
     
     # We use ; as the separator on Windows for --add-data
     separator = ";" if sys.platform == "win32" else ":"
@@ -44,19 +44,20 @@ def main():
     # The entry point is backend/production.py
     entry_point = os.path.join(base_dir, "backend", "production.py")
     
-    # PyInstaller command
+    # PyInstaller command using sys.executable to strictly enforce the .venv
     pyinstaller_cmd = (
-        f'pyinstaller --noconfirm --onedir --windowed '
+        f'"{sys.executable}" -m PyInstaller --noconfirm --onefile --windowed '
         f'--name "GravityBlu" '
         f'--add-data "{frontend_data_arg}" '
+        f'--add-binary "ffmpeg{separator}ffmpeg" '
+        f'--hidden-import "dns" '
         f'"{entry_point}"'
     )
     run_command(pyinstaller_cmd, cwd=base_dir)
     
     print("\n" + "="*50)
     print("BUILD SUCCESSFUL!")
-    print(f"Your compiled application is located in: {os.path.join(base_dir, 'dist', 'GravityBlu')}")
-    print("Note: To run the executable, ensure the 'ffmpeg' directory is placed next to 'GravityBlu.exe'")
+    print(f"Your compiled application is located in: {os.path.join(base_dir, 'dist')}")
     print("="*50)
 
 if __name__ == "__main__":

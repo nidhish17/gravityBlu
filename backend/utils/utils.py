@@ -18,7 +18,7 @@ APP_NAME = "GravityBlu"
 
 def get_ffmpeg_path():
     if getattr(sys, "frozen", False):
-        base_path = Path(sys.executable).parent
+        base_path = Path(sys._MEIPASS)
     else:
         base_path = Path(__file__).resolve().parents[2]
 
@@ -27,7 +27,7 @@ def get_ffmpeg_path():
 
 def get_ffmpeg_dir():
     if getattr(sys, "frozen", False):
-        base_path = Path(sys.executable).parent
+        base_path = Path(sys._MEIPASS)
     else:
         base_path = Path(__file__).resolve().parents[2]
 
