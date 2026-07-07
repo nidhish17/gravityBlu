@@ -116,11 +116,23 @@ class SegmentDownloader:
                     # Not merging, save directory path
                     final_save_loc = os.path.dirname(base_path)
 
+                # Normalize path for Windows Explorer (converts forward slashes to backslashes)
+                final_save_loc = os.path.normpath(final_save_loc)
+
+                # Calculate total segmented duration
+                total_duration_secs = sum(float(end) - float(start) for start, end in parsed_segments)
+                mins, secs = divmod(int(total_duration_secs), 60)
+                hours, mins = divmod(mins, 60)
+                if hours > 0:
+                    formatted_duration = f"{hours}:{mins:02d}:{secs:02d}"
+                else:
+                    formatted_duration = f"{mins}:{secs:02d}"
+
                 # Add to database for "Finished" tab
                 add_download(
                     d_type="segment",
                     title=video_info.get("videoTitle", "Segment Download"),
-                    duration=video_info.get("videoDuration", ""),
+                    duration=formatted_duration,
                     resolution=video_info.get("resolution", ""),
                     thumbnail=video_info.get("thumbnail", ""),
                     filesize=filesize,

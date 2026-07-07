@@ -138,7 +138,12 @@ class VideoDownloader:
 
                 # Retrieve final details for database
                 final_filesize = downloaded_info.get("filesize") or downloaded_info.get("filesize_approx", 0)
-                final_filepath = downloaded_info.get("filepath", save_loc)
+
+                # Since we strictly enforce merge_output_format="mp4" and ext=mp4 in our format string,
+                # the final file will ALWAYS be an .mp4. We append it manually (just like audio appends .mp3)
+                # because yt-dlp's _filename might return the pre-merged extension (like .webm) causing explorer to fail.
+                final_filepath = f"{os.path.normpath(save_loc)}.mp4"
+
                 db_data = {
                     "videoId": video_id,
                     "filepath": final_filepath,
@@ -187,7 +192,7 @@ class VideoDownloader:
                     f"/best[ext=mp4]"
                 ),
                 "ffmpeg_location": self.ffmpeg_path,
-                "outtmpl": f"{save_location}/{filename}",
+                "outtmpl": f"{save_location}/{filename}.%(ext)s",
                 "updatetime": False,
                 "merge_output_format": "mp4",
                 # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience

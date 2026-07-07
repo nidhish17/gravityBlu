@@ -24,7 +24,13 @@ class DownloaderApi:
         try:
             # only works for windows for now
             if sys.platform == "win32":
-                subprocess.Popen(f"explorer /select, {os.path.realpath(location)}")
+                location_norm = os.path.realpath(location)
+                if os.path.isdir(location_norm):
+                    # Open the folder directly
+                    subprocess.Popen(f'explorer "{location_norm}"')
+                else:
+                    # Highlight the specific file
+                    subprocess.Popen(f'explorer /select,"{location_norm}"')
             # return {"message": "Opening...", "status_code": 200}
             return {"ok": True, "status": Status.SUCCESS.value, "data": {"message": "opening file location"}}
         except Exception as err:
