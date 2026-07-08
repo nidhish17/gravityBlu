@@ -2,12 +2,21 @@ import Navbar from "./ui/Navbar.jsx";
 import {Toaster} from "react-hot-toast";
 import Downloader from "./Downloader.jsx";
 import {Tooltip} from "react-tooltip";
-import {useState} from "react";
+import {useState, useEffect} from "react";
 
 
 const AppLayout = function () {
 
     const [page, setPage] = useState("download");
+
+    useEffect(() => {
+        window.changeTab = (tabName) => {
+            setPage(tabName);
+        };
+        return () => {
+            delete window.changeTab;
+        };
+    }, []);
 
 
     return (

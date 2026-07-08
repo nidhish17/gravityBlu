@@ -6,6 +6,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import webview
 from backend.utils.utils import APP_NAME, APP_WIDTH, APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT
 from backend.main import DownloaderApi
+import pystray
+from PIL import Image
 
 
 ### -------------------------------------use google dns------------------------------------- ###
@@ -34,7 +36,7 @@ socket.getaddrinfo = fast_dns  # ←  installs the patch
 def app():
     api = DownloaderApi()
 
-    webview.create_window(
+    app_window = webview.create_window(
         title=APP_NAME,
         url="http://localhost:5173/",
         height=APP_HEIGHT,
@@ -42,10 +44,63 @@ def app():
         min_size=(MIN_APP_WIDTH, MIN_APP_HEIGHT),
         js_api=api,
     )
-    # app_window.events.closing += on_closing
-    # app_window.events.loaded += on_loaded
+
+    def on_closing():
+        app_window.hide()
+        return False
+
+    app_window.events.closing += on_closing
+
+    # Global flag to prevent multiple tray icons on page reloads
+    tray_setup_done = False
+
+    def setup_tray():
+        nonlocal tray_setup_done
+        if tray_setup_done:
+            return
+
+        try:
+            image_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icon.png")
+            image = Image.open(image_path)
+
+            def show_window(icon, item):
+                app_window.show()
+
+            def nav_download(icon, item):
+                app_window.show()
+                app_window.evaluate_js("if(window.changeTab) window.changeTab('download');")
+
+            def nav_downloading(icon, item):
+                app_window.show()
+                app_window.evaluate_js("if(window.changeTab) window.changeTab('downloading');")
+
+            def nav_downloads(icon, item):
+                app_window.show()
+                app_window.evaluate_js("if(window.changeTab) window.changeTab('finished');")
+
+            def exit_app(icon, item):
+                icon.stop()
+                app_window.destroy()
+                os._exit(0)
+
+            menu = pystray.Menu(
+                pystray.MenuItem("Open GravityBlu", show_window, default=True),
+                pystray.MenuItem("Download", nav_download),
+                pystray.MenuItem("Downloading", nav_downloading),
+                pystray.MenuItem("Downloads", nav_downloads),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem("Exit", exit_app),
+            )
+
+            icon = pystray.Icon("gravityBlu", image, "gravityBlu", menu)
+            icon.run_detached()
+            tray_setup_done = True
+        except Exception as e:
+            print(f"Failed to setup system tray: {e}")
+
+    app_window.events.loaded += setup_tray
+
     webview.start(debug=True)
-    # print("window set successfully")
 
 
 # def on_closing():
