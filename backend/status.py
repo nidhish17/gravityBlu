@@ -6,4 +6,3 @@ class Status(Enum):
     ERROR = "error"
     CANCELLED = "cancelled"
     PENDING = "pending"
-

@@ -5,10 +5,13 @@ import Downloaded from "./pages/Downloaded.jsx";
 import {FaDownload} from "react-icons/fa";
 import Downloading from "./pages/Downloading.jsx";
 import useDownloadStore from "../hooks/useDownloadStore.js";
+import useSegmentDownloadStore from "../../store/useSegmentDownloadStore.js";
 
 const Downloader = function ({page, setPage}) {
 
-    const totalVideosDownloading = useDownloadStore((state) => state.getTotalDownloading())
+    const normalDownloads = useDownloadStore((state) => state.getTotalDownloading())
+    const segmentDownloads = useSegmentDownloadStore((state) => state.getTotalDownloads())
+    const totalVideosDownloading = normalDownloads + segmentDownloads;
 
 
     const renderPage = function () {

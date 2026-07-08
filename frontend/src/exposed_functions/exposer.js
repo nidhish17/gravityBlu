@@ -33,7 +33,7 @@ window.addEventListener("pywebviewready", () => {
         const {removeDownload, downloads} = useDownloadStore.getState();
         console.log(downloads);
         removeDownload(id);
-        toast.error(`Failed to download ${truncate(title, 10)} ${details}` || "failed to download", {duration: 6000});
+        toast.error(`Failed to download ${truncate(title, 10)} ${details}`, {duration: 6000});
         return "";
     }
 

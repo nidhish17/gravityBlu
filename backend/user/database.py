@@ -1,4 +1,13 @@
-from peewee import CharField, SqliteDatabase, Model, BooleanField, IntegerField, ForeignKeyField, BigIntegerField, DateTimeField
+from peewee import (
+    CharField,
+    SqliteDatabase,
+    Model,
+    BooleanField,
+    IntegerField,
+    ForeignKeyField,
+    BigIntegerField,
+    DateTimeField,
+)
 import os
 from threading import Lock
 import sys
@@ -11,7 +20,6 @@ else:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-
 # print(BASE_DIR)
 DB_PATH = os.path.join(BASE_DIR, "user.db")
 db = SqliteDatabase(DB_PATH)
@@ -22,17 +30,14 @@ class User(Model):
     user_save_location = CharField(null=True)
     ask_quality_everytime = BooleanField(default=False)
     quality = IntegerField(null=True, default=1080)
+    audio_quality = IntegerField(null=True, default=192)
 
     class Meta:
         database = db
 
 
 class Download(Model):
-    DOWNLOAD_TYPE_CHOICES = (
-        ("video", "Video"),
-        ("audio", "Audio"),
-        ("segment", "Segment")
-    )
+    DOWNLOAD_TYPE_CHOICES = (("video", "Video"), ("audio", "Audio"), ("segment", "Segment"))
 
     user = ForeignKeyField(User, backref="downloads")
     title = CharField(default="video title")
@@ -48,6 +53,7 @@ class Download(Model):
     class Meta:
         database = db
 
+
 class SegmentTimestamp(Model):
     download = ForeignKeyField(Download, backref="segments")
     # video download start at?
@@ -57,9 +63,15 @@ class SegmentTimestamp(Model):
     class Meta:
         database = db
 
+
 def init_db():
     with db:
-        db.create_tables([User, Download], safe=True)
+        db.create_tables([User, Download, SegmentTimestamp], safe=True)
+        try:
+            db.execute_sql("ALTER TABLE user ADD COLUMN audio_quality INTEGER DEFAULT 192")
+        except Exception:
+            pass  # Column likely already exists
+
         User.get_or_create(id=1)
 
 
@@ -78,16 +90,15 @@ def add_download(d_type, title, duration, resolution, thumbnail, filesize, save_
             resolution=resolution,
             thumb_link=thumbnail,
             size=filesize,
-            type=d_type
+            type=d_type,
         )
 
     return download
 
 
-def get_downloads(user_id = 1, page: int = 1):
+def get_downloads(user_id=1, page: int = 1):
     query = (
-        Download
-        .select()
+        Download.select()
         .where(Download.user_id == user_id)
         .order_by(Download.id.desc())
         .limit(10)
@@ -96,15 +107,13 @@ def get_downloads(user_id = 1, page: int = 1):
 
     return list(query)
 
+
 def delete_download(download_id: int, user_id: int = 1):
-    query = (
-        Download
-        .delete()
-        .where((Download.id == download_id) & (Download.user_id == user_id))
-    )
+    query = Download.delete().where((Download.id == download_id) & (Download.user_id == user_id))
 
     rows_deleted = query.execute()
     return rows_deleted
+
 
 # db.connect()
 # db.create_tables([User])

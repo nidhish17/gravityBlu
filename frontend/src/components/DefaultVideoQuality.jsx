@@ -40,11 +40,14 @@ const DefaultVideoQuality = function () {
     const defaultVideoQuality = useVideoQualityStore((state) => state.defaultVideoQuality);
     const setDefaultVideoQuality = useVideoQualityStore((state) => state.setDefaultVideoQuality);
 
+    const defaultAudioQuality = useVideoQualityStore((state) => state.defaultAudioQuality);
+    const setDefaultAudioQuality = useVideoQualityStore((state) => state.setDefaultAudioQuality);
+
     usePywebview(async () => {
         const res = await window.pywebview.api.default.get_download_preferences();
         if (res.ok) {
             console.log(res.data);
-            let {videoQuality, askEveryTime} = res.data;
+            let {videoQuality, askEveryTime, audioQuality} = res.data;
 
             switch (videoQuality) {
                 case 720:
@@ -65,6 +68,7 @@ const DefaultVideoQuality = function () {
             }
             setDefaultVideoQuality(videoQuality);
             setAskEveryTime(askEveryTime);
+            if (audioQuality) setDefaultAudioQuality(audioQuality.toString());
         }
     })
 
@@ -74,22 +78,24 @@ const DefaultVideoQuality = function () {
         // even if the askEveryTime is changed then send the form
         // if radio inputs are changed then send it
         let updatedOption = {
-            // passing defaultVcodec state for updatedVal instead of setting it to an empty string so as to
-            // persist state in database else in database it becomes empty if i don't pass it here!
-            videoQuality: {updated: false, prevVal: defaultVideoQuality, updatedVal: defaultVideoQuality}
+            videoQuality: {updated: false, prevVal: defaultVideoQuality, updatedVal: defaultVideoQuality},
+            audioQuality: {updated: false, prevVal: defaultAudioQuality, updatedVal: defaultAudioQuality}
         };
-
-        // console.log("Form update standby");
 
         if (e.target.name === "videoQuality") {
             updatedOption.videoQuality.updatedVal = e.target.value;
             updatedOption.videoQuality.updated = true;
             setDefaultVideoQuality(e.target.value);
+        } else if (e.target.name === "audioQuality") {
+            updatedOption.audioQuality.updatedVal = e.target.value;
+            updatedOption.audioQuality.updated = true;
+            setDefaultAudioQuality(e.target.value);
         }
 
         const defaultData = {
             "askQualityEveryTime": askEveryTime,
             "defaultVideoQuality": updatedOption.videoQuality.updatedVal,
+            "defaultAudioQuality": updatedOption.audioQuality.updatedVal,
         }
 
         try {
@@ -107,6 +113,9 @@ const DefaultVideoQuality = function () {
             if (updatedOption.videoQuality.updated) {
                 setDefaultVideoQuality(updatedOption.videoQuality.prevVal);
             }
+            if (updatedOption.audioQuality.updated) {
+                setDefaultAudioQuality(updatedOption.audioQuality.prevVal);
+            }
         } finally {
             setUpdatingDetails(false);
         }
@@ -116,7 +125,7 @@ const DefaultVideoQuality = function () {
 
     return (
         <div className="space-y-2">
-            <p className="text-lg font-semibold text-center lowercase">Video quality and Codec</p>
+            <p className="text-lg font-semibold text-center lowercase">Media quality</p>
             <hr className="text-gray-500/70"/>
             {/*<AskEveryTime />*/}
 
@@ -126,7 +135,7 @@ const DefaultVideoQuality = function () {
             >
                 <div className="flex flex-col gap-y-6">
                     <div className="space-y-1">
-                        <h3 className="font-semibold capitalize">quality</h3>
+                        <h3 className="font-semibold capitalize">video quality</h3>
                         <div className="grid grid-cols-3 items-center gap-3 place-items-start">
                             {["8k", "4k", "2k", "1080p", "720p"].map((quality, i) => {
                                 return <RadioInput
@@ -141,6 +150,22 @@ const DefaultVideoQuality = function () {
                         </div>
                         <p className="info text-sm text-stone-600/90">if preferred video quality isn't available, next
                             best is picked instead.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                        <h3 className="font-semibold capitalize">audio quality</h3>
+                        <div className="grid grid-cols-3 items-center gap-3 place-items-start">
+                            {["320", "256", "192", "128", "64"].map((quality, i) => {
+                                return <RadioInput
+                                    key={`audio-${i}`}
+                                    id={`audio-${quality}`}
+                                    name="audioQuality"
+                                    value={quality}
+                                    label={`${quality} kbps`}
+                                    checked={quality === defaultAudioQuality}
+                                />
+                            })}
+                        </div>
                     </div>
                 </div>
 

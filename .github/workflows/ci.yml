@@ -1,0 +1,53 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, segment-downloader ]
+  pull_request:
+    branches: [ main, master, segment-downloader ]
+
+jobs:
+  lint:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff Linter
+        run: ruff check .
+
+      - name: Run Ruff Formatter Check
+        run: ruff format --check .
+
+      - name: Run Pytest
+        env:
+          PYTHONPATH: .
+        run: |
+          pip install pytest
+          pip install -r requirements.txt
+          pytest tests/backend/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Run Frontend Linter (ESLint)
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run Frontend Tests (Vitest)
+        working-directory: ./frontend
+        run: npm run test

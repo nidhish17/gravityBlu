@@ -55,7 +55,9 @@ class VideoDownloader:
         else:
             vcodec = "avc"
 
-        ydl_opts = self.generate_ydl_ops(video_is_short, vcodec, filename, user_preferred_quality, user_preferred_save_loc)
+        ydl_opts = self.generate_ydl_ops(
+            video_is_short, vcodec, filename, user_preferred_quality, user_preferred_save_loc
+        )
 
         return {
             "video_id": video_id,
@@ -63,7 +65,7 @@ class VideoDownloader:
             "vcodec": vcodec,
             "user": user,
             "filename": filename,
-            "user_preferred_save_loc": user_preferred_save_loc
+            "user_preferred_save_loc": user_preferred_save_loc,
         }
 
     def save_data_to_db(self, downloaded_info):
@@ -72,7 +74,7 @@ class VideoDownloader:
         thumbnail = downloaded_info.get("thumbnail")
         duration = downloaded_info.get("duration_string")
         resolution = downloaded_info.get("resolution")
-        video_id = downloaded_info.get("videoId")
+        downloaded_info.get("videoId")
         filesize = downloaded_info.get("filesize")
         save_loc = downloaded_info.get("filepath")
 
@@ -83,34 +85,55 @@ class VideoDownloader:
             duration=duration,
             save_loc=save_loc,
             resolution=resolution,
-            d_type="video"
+            d_type="video",
         )
 
-    def download_video(self, url, video_info, update_progress: Callable | None = None,
-                       download_complete: Callable | None = None):
+    def download_video(
+        self, url, video_info, update_progress: Callable | None = None, download_complete: Callable | None = None
+    ):
 
         video_details = self.get_video_details(video_info)
         video_id = video_details.get("video_id")
 
         def progress_hook(d):
-            # print("start of info dict progress hook", d, "info dict progress hook")
+            import time
+            from backend.youtube.downloader.download_state import download_states
+
+            while True:
+                state = download_states.get(video_id, "downloading")
+                if state == "cancelled":
+                    raise Exception("Download cancelled by user.")
+                elif state == "paused":
+                    time.sleep(1)
+                else:
+                    break
+
             if d["status"] == "downloading":
                 percent = d.get("_percent_str", "").strip()
                 speed = d.get("_speed_str", "")
                 eta = d.get("_eta_str", "")
                 done = d.get("downloaded_bytes", 0)
                 total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
-                data = {"id": video_id, "progressPercent": f"{percent}", "eta": f"{eta}", "speed": f"{speed}",
-                        "downloaded": False,
-                        "processing": False, "downloadedBytes": done, "totalBytes": total}
+                data = {
+                    "id": video_id,
+                    "progressPercent": f"{percent}",
+                    "eta": f"{eta}",
+                    "speed": f"{speed}",
+                    "downloaded": False,
+                    "processing": False,
+                    "downloadedBytes": done,
+                    "totalBytes": total,
+                    "paused": False,
+                }
                 update_progress(data)
-            # This one dosen't send that the video download has been completed but instead just sends that processing
-            # has started and the download_complete status is actually sent by the postprocessor hook which is more reliable
-            elif d["status"] == "finished":
-                data = {"id": video_id, "downloaded": False, "processing": True}
-                download_complete(data)
             else:
                 pass
+
+        def postprocessor_hook(d):
+            if d["status"] == "started":
+                data = {"id": video_id, "downloaded": False, "processing": True}
+                if download_complete:
+                    download_complete(data)
 
         ydl_opts = video_details.get("ydl_opts")
         filename = video_details.get("filename")
@@ -119,45 +142,74 @@ class VideoDownloader:
         # attach the progress hook to ydl opts
         if update_progress or download_complete:
             ydl_opts["progress_hooks"] = [progress_hook]
+            ydl_opts["postprocessor_hooks"] = [postprocessor_hook]
+
+        # Pre-fetch formats to construct dynamic audio format string without duplicates
+        try:
+            with YoutubeDL({"quiet": True}) as info_ydl:
+                pre_info = info_ydl.extract_info(url, download=False)
+                formats = pre_info.get("formats", [])
+
+                # group by language and pick highest quality (tbr/abr)
+                langs = {}
+                for f in formats:
+                    if f.get("vcodec") == "none" and f.get("acodec") != "none":
+                        lang = f.get("language") or "default"
+                        tbr = f.get("tbr") or f.get("abr") or 0
+                        current_best = langs.get(lang)
+                        if not current_best or tbr > (current_best.get("tbr") or current_best.get("abr") or 0):
+                            langs[lang] = f
+
+                audio_format_ids = [f["format_id"] for f in langs.values()]
+                if audio_format_ids:
+                    audio_str = "+".join(audio_format_ids)
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", audio_str)
+                else:
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
+        except Exception as e:
+            print(f"Failed to pre-fetch audio formats: {e}")
+            ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
 
         # Download the video here!
         with YoutubeDL(ydl_opts) as ydl:
             try:
                 downloaded_info = ydl.extract_info(url, download=True)
                 save_loc = os.path.join(save_location, filename)
+
+                # Retrieve final details for database
+                final_filesize = downloaded_info.get("filesize") or downloaded_info.get("filesize_approx", 0)
+
+                # Since we changed merge_output_format to mp4, the final file will be an .mp4.
+                final_filepath = f"{os.path.normpath(save_loc)}.mp4"
+
+                db_data = {
+                    "videoId": video_id,
+                    "filepath": final_filepath,
+                    "filesize": final_filesize,
+                    "title": downloaded_info.get("title", ""),
+                    "thumbnail": downloaded_info.get("thumbnail", ""),
+                    "duration_string": downloaded_info.get("duration_string", ""),
+                    "resolution": downloaded_info.get("resolution", ""),
+                }
+
+                print("\033[1m FINISHED MERGING \033[0m")
+                self.save_data_to_db(db_data)
+                if self.frontend_comms:
+                    self.frontend_comms.send_download_complete(
+                        {"id": video_id, "downloaded": True, "processing": False}
+                    )
+
             except DownloadError as e:
                 error_msg = str(e).lower()
                 if "sign in to confirm your age" in error_msg or "confirm your age" in error_msg:
                     print("Age restricted video")
                     raise Exception("Age-Restricted video cannot be downloaded!")
-
-    def post_processor(self, d):
-        # print(d)
-        status = d.get("status")
-        ppname = (d.get("postprocessor") or "").lower()
-        info_dict = d.get("info_dict")
-
-        video_id = info_dict.get("id")
-        filepath = info_dict.get("filepath")
-        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
-        title = info_dict.get("title")
-        thumbnail = info_dict.get("thumbnail")
-        duration = info_dict.get("duration_string")
-        resolution = info_dict.get("resolution")
-
-
-        if status == "finished" and ("movefiles" in ppname):
-            print("\033[1m FINISHED MERGING \033[0m")
-            # call the save to database and also send the data to frontend!
-            db_data = {"videoId": video_id, "filepath": filepath, "filesize": filesize, "title": title, "thumbnail": thumbnail, "duration_string": duration, "resolution": resolution}
-            frontend_data = {"id": video_id, "downloaded": True, "processing": False}
-            self.save_data_to_db(db_data)
-            self.frontend_comms.send_download_complete(frontend_data)
-            print(f"\033[93m {frontend_data} \033[0m")
-
+                else:
+                    # Re-raise the exception so downloader_api.py can catch it and send the error to the UI
+                    raise e
 
     def generate_ydl_ops(self, is_short, vcodec, filename, video_quality, save_location):
-        '''
+        """
         generates ydl_options for downloading video
         :param save_location:
         :param is_short: is required to get proper videoquality
@@ -166,23 +218,27 @@ class VideoDownloader:
         :param video_quality:
 
         :return: returns generated ydl_options for downloading the video
-        '''
-        ydl_opts = get_opts({
-            # "external_downloader": str(ARIA2C_PATH),
-            # "external_downloader_args": ['-x', '16', '-k', '1M'],  # 16 connections, 1MB chunks
-            "format": (
-                f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
-                f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
-                f"/best[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]"
-                f"/best[ext=mp4]"
-            ),
-            "ffmpeg_location": self.ffmpeg_path,
-            "outtmpl": f"{save_location}/{filename}",
-            "updatetime": False,
-            "merge_output_format": "mp4",
-            # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
-            "postprocessor_hooks": [self.post_processor],
-        })
+        """
+        ydl_opts = get_opts(
+            {
+                # "external_downloader": str(ARIA2C_PATH),
+                # "external_downloader_args": ['-x', '16', '-k', '1M'],  # 16 connections, 1MB chunks
+                "format": (
+                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+mergeall[vcodec=none]"
+                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+mergeall[vcodec=none]"
+                    f"/best[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]"
+                    f"/best[ext=mp4]"
+                ),
+                "allow_multiple_audio_streams": True,
+                "ffmpeg_location": self.ffmpeg_path,
+                "outtmpl": f"{save_location}/{filename}.%(ext)s",
+                "updatetime": False,
+                "merge_output_format": "mp4",
+                "writesubtitles": True,
+                "subtitleslangs": ["all"],
+                "postprocessors": [{"key": "FFmpegEmbedSubtitle"}],
+                "compat_opts": ["no-keep-subs"],
+            }
+        )
 
         return ydl_opts
-

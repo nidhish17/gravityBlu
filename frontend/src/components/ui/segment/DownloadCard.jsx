@@ -4,14 +4,37 @@ import {MdOutlineVideoStable} from "react-icons/md";
 import {CiClock2} from "react-icons/ci";
 import {HiFilm} from "react-icons/hi";
 import {RiDeleteBin2Line} from "react-icons/ri";
+import {useState} from "react";
+import useSegmentDownloadStore from "../../../../store/useSegmentDownloadStore.js";
 
 const DownloadCard = function ({downloadInfo}) {
 
     const {id, downloaded, videoTitle, videoThumb, numSegments} = downloadInfo || {};
+    const [isPaused, setIsPaused] = useState(false);
+    const removeSegmentDownload = useSegmentDownloadStore((state) => state.removeDownload);
 
     const handleDeleteDownload = function (id) {
         // console.log("Deleting download with id", id);
     }
+
+    const handlePause = async () => {
+        setIsPaused(true);
+        await window.pywebview.api.pause_download(id);
+    };
+
+    const handleResume = async () => {
+        setIsPaused(false);
+        await window.pywebview.api.resume_download(id);
+    };
+
+    const handleCancel = async () => {
+        try {
+            await window.pywebview.api.cancel_download(id);
+            removeSegmentDownload(id);
+        } catch(e) {
+            console.error(e);
+        }
+    };
 
     return (
         <div className="animated-gradient-border rounded-lg p-[2px]">
@@ -44,7 +67,19 @@ const DownloadCard = function ({downloadInfo}) {
 
                     {downloaded && <DownloadComplete/>}
 
-                    {!downloaded && <ProgressIndicator />}
+                    {!downloaded && (
+                        <div className="flex flex-col">
+                            <ProgressIndicator />
+                            <div className="flex justify-end gap-x-2 mt-1">
+                                {isPaused ? (
+                                    <button onClick={handleResume} className="bg-green-600/90 hover:bg-green-500/90 px-3 py-1 text-xs text-white rounded cursor-pointer transition-colors">Resume</button>
+                                ) : (
+                                    <button onClick={handlePause} className="bg-yellow-600/90 hover:bg-yellow-500/90 px-3 py-1 text-xs text-white rounded cursor-pointer transition-colors">Pause</button>
+                                )}
+                                <button onClick={handleCancel} className="bg-red-600/90 hover:bg-red-500/90 px-3 py-1 text-xs text-white rounded cursor-pointer transition-colors">Cancel</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -53,7 +88,7 @@ const DownloadCard = function ({downloadInfo}) {
 }
 
 
-const OpenFileLocationButton = function ({}) {
+const OpenFileLocationButton = function () {
     return (
         <button
             // onClick={() => handleOpenFileLocation(`${downloadedDetail.saveLocation}`, videoTitle)}

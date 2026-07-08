@@ -13,10 +13,7 @@ DEFAULT_OPTS = {
     "no_color": True,
     "forcejson": True,
     "noplaylist": True,
-
-    "js_runtimes": {
-        "deno": {"path": DENO_PATH}
-    }
+    "js_runtimes": {"deno": {"path": DENO_PATH}},
 }
 
 DEBUG_OPTS = {
@@ -28,6 +25,7 @@ DEBUG_OPTS = {
     "versbose": True,
 }
 
+
 def get_opts(overrides=None):
     opts = DEFAULT_OPTS.copy()
     if overrides:
@@ -38,10 +36,11 @@ def get_opts(overrides=None):
 from backend.utils.utils import get_ffmpeg_path, generate_filename
 from backend.user.database import get_user
 
+
 def general_video_ydlopts(video_info, extra_args=None, downloading_segments=False):
     """
-        Minimalistic, contains default things like save location, ffmpeg location, filename to save to
-        Rest all like format and other required details to be added by the caller using the extra_args
+    Minimalistic, contains default things like save location, ffmpeg location, filename to save to
+    Rest all like format and other required details to be added by the caller using the extra_args
     """
     ffmpeg_path = get_ffmpeg_path()
     user = get_user()
@@ -50,17 +49,23 @@ def general_video_ydlopts(video_info, extra_args=None, downloading_segments=Fals
     video_title = video_info.get("videoTitle")
     filename = generate_filename(video_title)
 
-    ydl_opts = get_opts({
-        "ffmpeg_location": ffmpeg_path,
-        "outtmpl": f"{save_location}/{filename}_%(section_start)s-%(section_end)s" if downloading_segments else f"{save_location}/{filename}",
-        "updatetime": False,
-        "merge_output_format": "mp4",
-    })
+    ydl_opts = get_opts(
+        {
+            "ffmpeg_location": ffmpeg_path,
+            "outtmpl": f"{save_location}/{filename}_%(section_start)s-%(section_end)s.%(ext)s"
+            if downloading_segments
+            else f"{save_location}/{filename}",
+            "updatetime": False,
+            "merge_output_format": "mp4",
+            "writesubtitles": True,
+            "subtitleslangs": ["all"],
+            "postprocessors": [{"key": "FFmpegEmbedSubtitle"}],
+            "compat_opts": ["no-keep-subs"],  # Removes the standalone .vtt files after embedding
+            "allow_multiple_audio_streams": True,
+        }
+    )
 
     if extra_args:
         ydl_opts.update(extra_args)
 
     return ydl_opts
-
-
-

@@ -20,8 +20,13 @@ class AppUpdate:
             update_available = False
             if version.parse(latest_version) > version.parse(current_version):
                 update_available = True
-            return {"details": {"currentVersion": __VERSION__, "latestVersion": latest_version,
-                                "updateAvailable": update_available}}
+            return {
+                "details": {
+                    "currentVersion": __VERSION__,
+                    "latestVersion": latest_version,
+                    "updateAvailable": update_available,
+                }
+            }
         except Exception as e:
             # print(e, "from app_updater")
             return {"status": Status.ERROR.value, "details": {"error": str(e)}, "ok": False}
@@ -34,17 +39,14 @@ class AppUpdate:
                 "details": {
                     "message": "opened update website successfully",
                 },
-                "ok": True
+                "ok": True,
             }
         except Exception as err:
             return {
                 "status": Status.ERROR.value,
-                "details": {
-                    "message": "something went wrong",
-                    "error": str(err),
-                    "ok": False
-                }
+                "details": {"message": "something went wrong", "error": str(err), "ok": False},
             }
+
 
 # update = AppUpdate()
 # update.check_for_updates()

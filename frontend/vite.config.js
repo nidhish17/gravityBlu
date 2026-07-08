@@ -8,4 +8,9 @@ export default defineConfig({
   server: {
     hmr: true,
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
+  base: './'
 })

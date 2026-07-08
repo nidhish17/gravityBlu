@@ -1,5 +1,4 @@
 import os
-import pprint
 
 from yt_dlp import YoutubeDL
 from backend.status import Status
@@ -14,37 +13,218 @@ class SegmentDownloader:
         self.segment_downloader_info = SegmentDownloaderInfo()
         self.comms = Comms()
 
-    def download_segments(self, data: dict[str, str|list]):
+    def download_segments(self, data: dict[str, str | list]):
         url = data.get("url")
         segments = data.get("segments")
+        merge_segments = data.get("merge_segments", True)
         video_info = self.video_info.get_info(url)
-        ydl_opts = self.segment_downloader_info.ydl_opts(video_info, self.__parse_segments(segments))
+        parsed_segments = self.__parse_segments(segments)
+        ydl_opts = self.segment_downloader_info.ydl_opts(video_info, parsed_segments)
 
-        print(f"Segments: {segments}")
+        print(f"Segments: {segments}, Merge: {merge_segments}")
 
-        ffmpeg_dir = ydl_opts.get("ffmpeg_location", "")
-        if ffmpeg_dir and ffmpeg_dir not in os.environ.get("PATH", ""):
+        from backend.utils.utils import get_ffmpeg_dir, get_ffmpeg_path
+
+        ffmpeg_dir = get_ffmpeg_dir()
+        if ffmpeg_dir not in os.environ.get("PATH", ""):
             print("FFMPEG was not in PATH, adding it now...")
             os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
 
-        # pprint.pprint(ydl_opts)
+        # Extract base path from outtmpl
+        outtmpl = ydl_opts.get("outtmpl", "")
+        base_path = outtmpl.split("_%(section_start)s")[0]
+        ext = ydl_opts.get("merge_output_format", "mp4")
+
+        video_id = video_info.get("videoId")
+
+        def segment_progress_hook(d):
+            import time
+            from backend.youtube.downloader.download_state import download_states
+
+            while True:
+                state = download_states.get(video_id, "downloading")
+                if state == "cancelled":
+                    raise Exception("Download cancelled by user.")
+                elif state == "paused":
+                    time.sleep(1)
+                else:
+                    break
+
+            if d["status"] == "downloading":
+                percent = d.get("_percent_str", "").strip()
+                speed = d.get("_speed_str", "")
+                eta = d.get("_eta_str", "")
+                done = d.get("downloaded_bytes", 0)
+                total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
+
+                data = {
+                    "id": video_id,
+                    "progressPercent": f"{percent}",
+                    "eta": f"{eta}",
+                    "speed": f"{speed}",
+                    "downloaded": False,
+                    "processing": False,
+                    "downloadedBytes": done,
+                    "totalBytes": total,
+                    "paused": False,
+                }
+                self.comms.send_segment_download_progress(data)
+
+        def segment_postprocessor_hook(d):
+            if d["status"] == "started":
+                self.comms.send_segment_download_complete({"id": video_id, "downloaded": False, "processing": True})
+
+        ydl_opts["progress_hooks"] = [segment_progress_hook]
+        ydl_opts["postprocessor_hooks"] = [segment_postprocessor_hook]
+
+        # Pre-fetch formats to construct dynamic audio format string without duplicates
+        try:
+            with YoutubeDL({"quiet": True}) as info_ydl:
+                pre_info = info_ydl.extract_info(url, download=False)
+                formats = pre_info.get("formats", [])
+
+                # group by language and pick highest quality (tbr/abr)
+                langs = {}
+                for f in formats:
+                    if f.get("vcodec") == "none" and f.get("acodec") != "none":
+                        lang = f.get("language") or "default"
+                        tbr = f.get("tbr") or f.get("abr") or 0
+                        current_best = langs.get(lang)
+                        if not current_best or tbr > (current_best.get("tbr") or current_best.get("abr") or 0):
+                            langs[lang] = f
+
+                audio_format_ids = [f["format_id"] for f in langs.values()]
+                if audio_format_ids:
+                    audio_str = "+".join(audio_format_ids)
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", audio_str)
+                else:
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
+        except Exception as e:
+            print(f"Failed to pre-fetch audio formats: {e}")
+            ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
 
         with YoutubeDL(ydl_opts) as ydl:
             try:
-                pass
-                downloaded_info = ydl.download([url])
-                pprint.pprint(downloaded_info)
-                self.comms.send_segment_download_complete({"downloaded": True, "id": video_info.get("videoId"), "processing": False})
+                ydl.download([url])
+
+                # After download, handle the files
+                import glob
+                import subprocess
+                from backend.user.database import add_download
+
+                # Get all downloaded segment files
+                segment_files = []
+                for start, end in parsed_segments:
+                    # yt-dlp formats start/end as ints if they are whole numbers
+                    start_str = str(int(start)) if start == int(start) else str(start)
+                    end_str = str(int(end)) if end == int(end) else str(end)
+                    expected_path = f"{base_path}_{start_str}-{end_str}.{ext}"
+                    if os.path.exists(expected_path):
+                        segment_files.append(expected_path)
+                    else:
+                        # Fallback glob in case formatting differs slightly
+                        matches = glob.glob(f"{base_path}_{start_str}*.{ext}")
+                        if matches:
+                            segment_files.append(matches[0])
+
+                if not segment_files:
+                    raise Exception("No segment files found after download!")
+
+                final_save_loc = base_path
+                filesize = sum(os.path.getsize(f) for f in segment_files)
+
+                if merge_segments and len(segment_files) > 1:
+                    final_path = f"{base_path}_merged.{ext}"
+                    concat_file = f"{base_path}_concat.txt"
+
+                    with open(concat_file, "w", encoding="utf-8") as f:
+                        for sf in segment_files:
+                            # ffmpeg requires forward slashes or escaped backslashes in concat file
+                            safe_path = sf.replace("\\", "/")
+                            f.write(f"file '{safe_path}'\n")
+
+                    print("Merging segments...")
+                    subprocess.run(
+                        [
+                            get_ffmpeg_path(),
+                            "-y",
+                            "-f",
+                            "concat",
+                            "-safe",
+                            "0",
+                            "-i",
+                            concat_file,
+                            "-map",
+                            "0",
+                            "-c",
+                            "copy",
+                            final_path,
+                        ],
+                        check=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+
+                    # Clean up individual segments and concat file
+                    os.remove(concat_file)
+                    for sf in segment_files:
+                        try:
+                            os.remove(sf)
+                        except:
+                            pass
+
+                    final_save_loc = final_path
+                    filesize = os.path.getsize(final_path)
+                elif len(segment_files) == 1:
+                    # If only 1 segment, just use it (rename without start-end suffix)
+                    final_path = f"{base_path}.{ext}"
+                    if os.path.exists(final_path):
+                        os.remove(final_path)
+                    os.rename(segment_files[0], final_path)
+                    final_save_loc = final_path
+                else:
+                    # Not merging, save directory path
+                    final_save_loc = os.path.dirname(base_path)
+
+                # Normalize path for Windows Explorer (converts forward slashes to backslashes)
+                final_save_loc = os.path.normpath(final_save_loc)
+
+                # Clean up any leftover subtitle files
+                vtt_files = glob.glob(f"{base_path}*.vtt")
+                for vf in vtt_files:
+                    try:
+                        os.remove(vf)
+                    except:
+                        pass
+
+                # Calculate total segmented duration
+                total_duration_secs = sum(float(end) - float(start) for start, end in parsed_segments)
+                mins, secs = divmod(int(total_duration_secs), 60)
+                hours, mins = divmod(mins, 60)
+                if hours > 0:
+                    formatted_duration = f"{hours}:{mins:02d}:{secs:02d}"
+                else:
+                    formatted_duration = f"{mins}:{secs:02d}"
+
+                # Add to database for "Finished" tab
+                add_download(
+                    d_type="segment",
+                    title=video_info.get("videoTitle", "Segment Download"),
+                    duration=formatted_duration,
+                    resolution=video_info.get("resolution", ""),
+                    thumbnail=video_info.get("thumbnail", ""),
+                    filesize=filesize,
+                    save_loc=final_save_loc,
+                )
+
+                self.comms.send_segment_download_complete(
+                    {"downloaded": True, "id": video_info.get("videoId"), "processing": False}
+                )
             except Exception as err:
                 print(f"An unexpected error occurred {err}")
-                raise Exception("An error occurred while downloading the segments, please try again later.")
+                raise Exception(f"An error occurred while downloading the segments: {err}")
 
-        return {
-            "message": "Downloaded",
-            "ok": Status.SUCCESS.value,
-            "status_code": 200
-        }
-
+        return {"message": "Downloaded", "ok": Status.SUCCESS.value, "status_code": 200}
 
     def __parse_segments(self, segments):
         parsed_segments = []
@@ -54,17 +234,16 @@ class SegmentDownloader:
         for segment in segments:
             start_time = segment.get("startTime")
             end_time = segment.get("endTime")
-            parsed_segments.append(
-                (start_time, end_time)
-            )
+            parsed_segments.append((start_time, end_time))
 
         return parsed_segments
 
-'''
+
+"""
     - save a thumbnail to the folder so it is easy accessible / generates preview
     - we only save the segment folder location where the segments are located and redirect user to that folder when they click on
      open file loc.
-'''
+"""
 
 # testUrl = "https://youtu.be/IPB5xEaZgx8?si=Uyp7wTCfgQxANutZ"
 # downloader = SegmentDownloader()
@@ -77,7 +256,3 @@ class SegmentDownloader:
 #     ]
 # }
 # downloader.download_segments(data)
-
-
-
-
