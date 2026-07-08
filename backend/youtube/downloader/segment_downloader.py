@@ -50,7 +50,58 @@ class SegmentDownloader:
                 else:
                     break
 
+            if d["status"] == "downloading":
+                percent = d.get("_percent_str", "").strip()
+                speed = d.get("_speed_str", "")
+                eta = d.get("_eta_str", "")
+                done = d.get("downloaded_bytes", 0)
+                total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
+
+                data = {
+                    "id": video_id,
+                    "progressPercent": f"{percent}",
+                    "eta": f"{eta}",
+                    "speed": f"{speed}",
+                    "downloaded": False,
+                    "processing": False,
+                    "downloadedBytes": done,
+                    "totalBytes": total,
+                    "paused": False,
+                }
+                self.comms.send_segment_download_progress(data)
+
+        def segment_postprocessor_hook(d):
+            if d["status"] == "started":
+                self.comms.send_segment_download_complete({"id": video_id, "downloaded": False, "processing": True})
+
         ydl_opts["progress_hooks"] = [segment_progress_hook]
+        ydl_opts["postprocessor_hooks"] = [segment_postprocessor_hook]
+
+        # Pre-fetch formats to construct dynamic audio format string without duplicates
+        try:
+            with YoutubeDL({"quiet": True}) as info_ydl:
+                pre_info = info_ydl.extract_info(url, download=False)
+                formats = pre_info.get("formats", [])
+
+                # group by language and pick highest quality (tbr/abr)
+                langs = {}
+                for f in formats:
+                    if f.get("vcodec") == "none" and f.get("acodec") != "none":
+                        lang = f.get("language") or "default"
+                        tbr = f.get("tbr") or f.get("abr") or 0
+                        current_best = langs.get(lang)
+                        if not current_best or tbr > (current_best.get("tbr") or current_best.get("abr") or 0):
+                            langs[lang] = f
+
+                audio_format_ids = [f["format_id"] for f in langs.values()]
+                if audio_format_ids:
+                    audio_str = "+".join(audio_format_ids)
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", audio_str)
+                else:
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
+        except Exception as e:
+            print(f"Failed to pre-fetch audio formats: {e}")
+            ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
 
         with YoutubeDL(ydl_opts) as ydl:
             try:
@@ -103,6 +154,8 @@ class SegmentDownloader:
                             "0",
                             "-i",
                             concat_file,
+                            "-map",
+                            "0",
                             "-c",
                             "copy",
                             final_path,
@@ -135,6 +188,14 @@ class SegmentDownloader:
 
                 # Normalize path for Windows Explorer (converts forward slashes to backslashes)
                 final_save_loc = os.path.normpath(final_save_loc)
+
+                # Clean up any leftover subtitle files
+                vtt_files = glob.glob(f"{base_path}*.vtt")
+                for vf in vtt_files:
+                    try:
+                        os.remove(vf)
+                    except:
+                        pass
 
                 # Calculate total segmented duration
                 total_duration_secs = sum(float(end) - float(start) for start, end in parsed_segments)

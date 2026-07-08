@@ -149,20 +149,20 @@ const VideoCard = function ({
                         <div className="progress-info gap-y-1 flex flex-col">
                             <div className="flex justify-center">
                                 <div className="relative rounded-full h-2 basis-full bg-stone-700/50">
-                                    <div style={{width: progress || "0%"}}
-                                         className={`absolute rounded-full bg-indigo-600/90 inset-0`}></div>
+                                    <div style={{width: `${(progress || "0").replace(/[^0-9.]/g, '')}%`}}
+                                         className={`absolute rounded-full bg-indigo-600/90 inset-0 transition-all duration-300`}></div>
                                 </div>
                             </div>
 
                             <div
-                                className="flex flex-row justify-between tracking-tighter text-xs text-indigo-600 font-bold">
+                                className="flex flex-row justify-between tracking-tighter text-xs text-indigo-600 font-bold min-h-[16px]">
                                 {
                                     processing ? (
                                         <p className="tracking-wide">⚡ <span
                                             className="animate-pulse">Processing...</span></p>
                                     ) : (
                                         <>
-                                            <p className="">{progressDetail.downloadedBytes && `⚡ ${formatBytes(progressDetail.downloadedBytes)} / ${formatBytes(progressDetail.totalBytes)}, remains ${progressDetail.eta}`}</p>
+                                            <p className="">{progressDetail.downloadedBytes !== undefined ? `⚡ ${formatBytes(progressDetail.downloadedBytes)} / ${formatBytes(progressDetail.totalBytes || 0)}, remains ${progressDetail.eta || '--:--'}` : "Starting Download..."}</p>
                                             <p className="">{progressDetail.speed}</p>
                                         </>
                                     )

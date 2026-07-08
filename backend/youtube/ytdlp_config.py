@@ -57,6 +57,11 @@ def general_video_ydlopts(video_info, extra_args=None, downloading_segments=Fals
             else f"{save_location}/{filename}",
             "updatetime": False,
             "merge_output_format": "mp4",
+            "writesubtitles": True,
+            "subtitleslangs": ["all"],
+            "postprocessors": [{"key": "FFmpegEmbedSubtitle"}],
+            "compat_opts": ["no-keep-subs"],  # Removes the standalone .vtt files after embedding
+            "allow_multiple_audio_streams": True,
         }
     )
 

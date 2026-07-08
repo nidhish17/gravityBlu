@@ -20,14 +20,17 @@ class SegmentDownloaderInfo:
             video_info,
             {
                 "format": (
-                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={user_video_quality}]+bestaudio[ext=m4a]"
-                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]+bestaudio[ext=m4a]"
+                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={user_video_quality}]+mergeall[vcodec=none]"
+                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]+mergeall[vcodec=none]"
                     f"/best[ext=mp4][{'width' if is_short else 'height'}<={user_video_quality}]"
                     f"/best[ext=mp4]"
                 ),
+                "allow_multiple_audio_streams": True,
                 "download_ranges": download_range_func(None, segments),
                 "ffmpeg_location": get_ffmpeg_dir(),
                 "force_keyframes_at_cuts": True,
+                "writesubtitles": False,
+                "postprocessors": [],
             },
             True,
         )

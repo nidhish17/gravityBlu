@@ -126,13 +126,14 @@ class VideoDownloader:
                     "paused": False,
                 }
                 update_progress(data)
-            # This one dosen't send that the video download has been completed but instead just sends that processing
-            # has started and the download_complete status is actually sent by the postprocessor hook which is more reliable
-            elif d["status"] == "finished":
-                data = {"id": video_id, "downloaded": False, "processing": True}
-                download_complete(data)
             else:
                 pass
+
+        def postprocessor_hook(d):
+            if d["status"] == "started":
+                data = {"id": video_id, "downloaded": False, "processing": True}
+                if download_complete:
+                    download_complete(data)
 
         ydl_opts = video_details.get("ydl_opts")
         filename = video_details.get("filename")
@@ -141,6 +142,33 @@ class VideoDownloader:
         # attach the progress hook to ydl opts
         if update_progress or download_complete:
             ydl_opts["progress_hooks"] = [progress_hook]
+            ydl_opts["postprocessor_hooks"] = [postprocessor_hook]
+
+        # Pre-fetch formats to construct dynamic audio format string without duplicates
+        try:
+            with YoutubeDL({"quiet": True}) as info_ydl:
+                pre_info = info_ydl.extract_info(url, download=False)
+                formats = pre_info.get("formats", [])
+
+                # group by language and pick highest quality (tbr/abr)
+                langs = {}
+                for f in formats:
+                    if f.get("vcodec") == "none" and f.get("acodec") != "none":
+                        lang = f.get("language") or "default"
+                        tbr = f.get("tbr") or f.get("abr") or 0
+                        current_best = langs.get(lang)
+                        if not current_best or tbr > (current_best.get("tbr") or current_best.get("abr") or 0):
+                            langs[lang] = f
+
+                audio_format_ids = [f["format_id"] for f in langs.values()]
+                if audio_format_ids:
+                    audio_str = "+".join(audio_format_ids)
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", audio_str)
+                else:
+                    ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
+        except Exception as e:
+            print(f"Failed to pre-fetch audio formats: {e}")
+            ydl_opts["format"] = ydl_opts["format"].replace("mergeall[vcodec=none]", "bestaudio[ext=m4a]")
 
         # Download the video here!
         with YoutubeDL(ydl_opts) as ydl:
@@ -151,9 +179,7 @@ class VideoDownloader:
                 # Retrieve final details for database
                 final_filesize = downloaded_info.get("filesize") or downloaded_info.get("filesize_approx", 0)
 
-                # Since we strictly enforce merge_output_format="mp4" and ext=mp4 in our format string,
-                # the final file will ALWAYS be an .mp4. We append it manually (just like audio appends .mp3)
-                # because yt-dlp's _filename might return the pre-merged extension (like .webm) causing explorer to fail.
+                # Since we changed merge_output_format to mp4, the final file will be an .mp4.
                 final_filepath = f"{os.path.normpath(save_loc)}.mp4"
 
                 db_data = {
@@ -198,16 +224,20 @@ class VideoDownloader:
                 # "external_downloader": str(ARIA2C_PATH),
                 # "external_downloader_args": ['-x', '16', '-k', '1M'],  # 16 connections, 1MB chunks
                 "format": (
-                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
-                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+bestaudio[ext=m4a]"
+                    f"bestvideo[ext=mp4][vcodec^={vcodec}][{'width' if is_short else 'height'}<={video_quality}]+mergeall[vcodec=none]"
+                    f"/bestvideo[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]+mergeall[vcodec=none]"
                     f"/best[ext=mp4][{'width' if is_short else 'height'}<={video_quality}]"
                     f"/best[ext=mp4]"
                 ),
+                "allow_multiple_audio_streams": True,
                 "ffmpeg_location": self.ffmpeg_path,
                 "outtmpl": f"{save_location}/{filename}.%(ext)s",
                 "updatetime": False,
                 "merge_output_format": "mp4",
-                # "postprocessor_hooks": [self.postproc_hook] removed this and moved this part after the ydl.download() which does the same thing! for convenience
+                "writesubtitles": True,
+                "subtitleslangs": ["all"],
+                "postprocessors": [{"key": "FFmpegEmbedSubtitle"}],
+                "compat_opts": ["no-keep-subs"],
             }
         )
 
