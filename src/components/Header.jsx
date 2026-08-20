@@ -1,13 +1,12 @@
 import {IoCloseSharp} from "react-icons/io5";
-import {useContext, useEffect, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {FaArrowDown} from "react-icons/fa";
 import gbDemo from "../assets/gbdemo_compressed.mp4";
-import {RefContext} from "./AppLayout.jsx";
 import StyledLink from "./StyledLink.jsx";
+import {Link} from "react-router";
 
 function Header() {
     const [navOpen, setNavOpen] = useState(false);
-    const {downloadRef, aboutRef, featureRef} = useContext(RefContext);
     const videoRef = useRef(null);
 
     useEffect(() => {
@@ -24,21 +23,20 @@ function Header() {
                     <h1 onClick={() => {
                         window.scrollTo({ behavior: "smooth", top: 0 });
                         navOpen && setNavOpen(false);
-                    }} className="font-semibold text-2xl self-start cursor-pointer">gravityBlu</h1>
-                    <div
-                        className="flex flex-col w-full sm:w-auto sm:flex-row items-center gap-x-3 gap-y-2 font-semibold text-lg">
+                    }} className="font-semibold text-2xl self-start cursor-pointer"><Link to="/">gravityBlu</Link></h1>
+                    <div className="flex flex-col w-full sm:w-auto sm:flex-row items-center gap-x-3 gap-y-2 font-semibold text-lg">
                         <StyledLink onClick={() => {
-                            featureRef.current?.scrollIntoView({ behavior: "smooth" })
                             navOpen && setNavOpen(false);
-                        }}>Features</StyledLink>
+                        }}><a href="#features">Features</a></StyledLink>
                         <StyledLink onClick={() => {
-                            downloadRef.current?.scrollIntoView({ behavior: "smooth" });
                             setNavOpen(false);
-                        }}>Download</StyledLink>
+                        }}><a href="#download-section">Download</a></StyledLink>
                         <StyledLink onClick={() => {
-                            aboutRef.current?.scrollIntoView({ behavior: "smooth" })
                             setNavOpen(false);
-                        }}>About</StyledLink>
+                        }}><a href="#about">About</a></StyledLink>
+                        <StyledLink onClick={() => {
+                            setNavOpen(false);
+                        }}><Link to="/download">Updates</Link></StyledLink>
                     </div>
                     <span onClick={() => setNavOpen(false)}
                           className="inline-block p-3 absolute right-0 rounded bg-white/20 cursor-pointer sm:hidden">
@@ -47,8 +45,7 @@ function Header() {
                 </nav>
             </div>
 
-            <button onClick={() => setNavOpen(prev => !prev)}
-                    className="px-4 py-3 rounded sm:hidden flex flex-col gap-1 bg-white/30 fixed right-5 top-5 z-20">
+            <button onClick={() => setNavOpen(prev => !prev)} className="px-4 py-3 rounded sm:hidden flex flex-col gap-1 bg-white/30 fixed right-5 top-5 z-20">
                 <div className="h-0.5 w-6 bg-white"></div>
                 <div className="h-0.5 w-6 bg-white"></div>
                 <div className="h-0.5 w-6 bg-white"></div>
@@ -67,11 +64,10 @@ function Header() {
                             {/*https://stackoverflow.com/questions/67150736/tailwind-background-gradient-transition*/}
                             <button
                                 onClick={() => {
-                                    downloadRef.current?.scrollIntoView({ behavior:"smooth" });
                                     navOpen && setNavOpen(false);
                                 }}
                                 className="group cursor-pointer bg-size-[200%_200%] bg-position-[0%_0%] hover:bg-position-[100%_100%] uppercase w-full sm:w-auto flex items-center justify-center gap-x-2 bg-gradient-to-br  to-indigo-900 via-violet-950 from-rose-950 transition-all duration-500 px-6 py-3 rounded-full text-lg font-semibold shadow-2xl hover:shadow-rose-900/70">
-                                Download Now
+                                <a href="#download-section">Download Now</a>
                                 <FaArrowDown size={18} className="animate-bounc group-hover:translate-y-[2.5px] transition-transform" />
                             </button>
                         </div>

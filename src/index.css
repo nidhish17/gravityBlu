@@ -23,6 +23,10 @@
         animation: pulse 10s cubic-bezier(1, 1, 1, 1) infinite;
     }
 
+    .flexicjc {
+        @apply flex items-center justify-center;
+    }
+
 }
 
 

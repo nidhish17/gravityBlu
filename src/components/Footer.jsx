@@ -1,11 +1,8 @@
 import appLogo from "../assets/icon.png"
 import {AiFillGithub} from "react-icons/ai";
 import {MdArrowOutward} from "react-icons/md";
-import {useContext} from "react";
-import {RefContext} from "./AppLayout.jsx";
 
 function Footer() {
-    const {downloadRef, aboutRef, featureRef} = useContext(RefContext);
 
     return (
         <footer className="p-4 sm:p-8 md:p-12 lg:p-16 gap-6 bg-neutral-900 flex flex-col sm:flex-row">
@@ -33,17 +30,17 @@ function Footer() {
                             Home
                         </button>
                         <button onClick={() => {
-                            featureRef.current?.scrollIntoView({behavior: "smooth"});
+
                         }} className="">
                             Features
                         </button>
                         <button onClick={() => {
-                            downloadRef.current?.scrollIntoView({behavior: "smooth"});
+
                         }} className="">
                             Download
                         </button>
                         <button onClick={() => {
-                            aboutRef.current?.scrollIntoView({behavior: "smooth"});
+
                         }} className="">
                             About
                         </button>

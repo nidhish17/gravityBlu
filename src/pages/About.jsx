@@ -8,7 +8,7 @@ import {MdArrowOutward} from "react-icons/md";
 
 function About({...props}) {
     return (
-        <Section {...props}>
+        <Section {...props} id="about">
             <div className="space-y-6">
                 <h1 className="font-bold text-3xl sm:text-4xl uppercase tracking-tighter">About</h1>
 

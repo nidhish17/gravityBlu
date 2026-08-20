@@ -6,7 +6,7 @@ import intutiveUI from "../assets/app_scs/Screenshot 2025-07-26 20-23-44.png"
 
 function Features({...props}) {
     return (
-        <Section {...props} className="borde">
+        <Section id={"features"} {...props} className="borde">
             <div className="space-y-6">
                 {/*feature heading*/}
                 <h1 className="font-bold text-3xl sm:text-4xl uppercase tracking-tighter">Features</h1>
